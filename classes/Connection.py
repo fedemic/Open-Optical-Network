@@ -4,7 +4,7 @@ class Connection:
         self._output = initial_data['output']
         self._signal_power = initial_data['signal_power']
         self._latency = 0
-        self._snr = 0
+        self._snr = None
 
     @property
     def input(self):
