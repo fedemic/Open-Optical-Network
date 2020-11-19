@@ -250,9 +250,20 @@ class Network:
     ###############################################################################
     # given a requested connection list, it deploys lightpaths with selected optimization
     def update_route_space(self):
-        #self._route_space.loc[self._route_space.path == formatted_path, 'CH_' + str(channel)] = 1  # update route_space
-        pass
+        indexes_range = self.route_space.index
+        for i in indexes_range:     # dataframe rows index
+            partial_products = np.ones(N_CHANNELS).astype(int)      # initialization of partial products
+            nodes_label_list = self.route_space['path'][i].split("->")
 
+            for j in range(len(nodes_label_list)-1):    # nodes in path index
+                line_label = nodes_label_list[j] + nodes_label_list[j + 1]
+                partial_products *= self.lines[line_label].state
+
+                if j != 0: # first node is not taken into account
+                    partial_products *= self.nodes[nodes_label_list[j]].switching_matrix[nodes_label_list[j-1]][nodes_label_list[j+1]]
+
+            for k in range(N_CHANNELS):     # k is the channel
+                self.route_space.loc[i, 'CH_'+str(k)] = partial_products[k]
 
     ###############################################################################
     # given a requested connection list, it deploys lightpaths with selected optimization
@@ -273,7 +284,6 @@ class Network:
                 connection.snr = None
                 connection.latency = 0
             else:
-                formatted_path = path
                 path = path.split("->")
                 lightpath = Lightpath(signal_power, list(path), channel)    # Lightpath object is used to consider channel info
                 final_signal = self.propagate(lightpath)
