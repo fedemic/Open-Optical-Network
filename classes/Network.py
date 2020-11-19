@@ -10,8 +10,8 @@ class Network:
     def __init__(self, json_filepath):
         self._nodes = {}    # dict of Node objects
         self._lines = {}    # dict of Line objects
-        self._weighted_paths = 0    # Dataframe: |path|latency|SNR|noise|
-        self._route_space = 0       # Dataframe: |path|CH_0|...|CH_n|
+        self._weighted_paths = None    # Dataframe: |path|latency|SNR|noise|
+        self._route_space = None       # Dataframe: |path|CH_0|...|CH_n|
 
         with open(json_filepath, "r") as read_file:
             data_dict = json.load(read_file)
@@ -168,17 +168,9 @@ class Network:
     ###############################################################################
     # generate route_space dataframe considering all possible paths
     def create_route_space(self):
-        db_dict = {"path": [],
-                   "CH_0": [],
-                   "CH_1": [],
-                   "CH_2": [],
-                   "CH_3": [],
-                   "CH_4": [],
-                   "CH_5": [],
-                   "CH_6": [],
-                   "CH_7": [],
-                   "CH_8": [],
-                   "CH_9": []}
+        db_dict = {"path": []}
+        for channel in range(N_CHANNELS):
+            db_dict["CH_"+str(channel)] = []
 
         for start_node in self.nodes:
             for destination_node in self.nodes:
@@ -192,16 +184,8 @@ class Network:
                         formatted_path = formatted_path[:-2]
 
                         db_dict['path'].append(formatted_path)
-                        db_dict['CH_0'].append(0)
-                        db_dict['CH_1'].append(0)
-                        db_dict['CH_2'].append(0)
-                        db_dict['CH_3'].append(0)
-                        db_dict['CH_4'].append(0)
-                        db_dict['CH_5'].append(0)
-                        db_dict['CH_6'].append(0)
-                        db_dict['CH_7'].append(0)
-                        db_dict['CH_8'].append(0)
-                        db_dict['CH_9'].append(0)
+                        for channel in range(N_CHANNELS):
+                            db_dict['CH_'+str(channel)].append(0)
 
         self.route_space = pd.DataFrame(db_dict)
 
@@ -257,11 +241,11 @@ class Network:
             path = ""
             channel = -1
             if optimize == "latency":
-                while path == "" and channel <= 8:
+                while path == "" and channel <= N_CHANNELS-2:
                     channel += 1
                     path = self.find_best_latency(connection.input, connection.output, channel)
             elif optimize == "snr":
-                while path == "" and channel <= 8:
+                while path == "" and channel <= N_CHANNELS-2:
                     channel += 1
                     path = self.find_best_snr(connection.input, connection.output, channel)
 

@@ -1,5 +1,6 @@
 from Lightpath import *
 from scipy.constants import c
+N_CHANNELS = 10
 
 class Line:
     def __init__(self, initial_data):
@@ -8,7 +9,7 @@ class Line:
         self._successive = {}   # dict of Node objects
         self._state = []        # channel availabily list
 
-        for i in range(10):
+        for i in range(N_CHANNELS):
             self._state.append("free")
 
     @property
