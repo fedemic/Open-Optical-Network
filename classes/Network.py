@@ -73,13 +73,26 @@ class Network:
         self._route_space = value
 
     ###############################################################################
-    # update of successive dictionaries of nodes and lines
+    # update of successive dictionaries of nodes and lines and initialize switching matrix
     def connect(self):
         for node_key in self.nodes:
+            self.nodes[node_key].switching_matrix = {}  # initialization to empty dict for each node
+
+            # successive elements definition
             for connected_node in self.nodes[node_key].connected_nodes:
                 line_label = node_key + connected_node
                 self.nodes[node_key].successive[line_label] = self.lines[line_label]
                 self.lines[line_label].successive[connected_node] = self.nodes[connected_node]
+
+                # switching matrix definition
+                switching_dict = {}
+                for out_connected_node in self.nodes[node_key].connected_nodes: # considering all possibile combination between connected nodes
+                    if connected_node == out_connected_node:
+                        switching_dict[out_connected_node] = np.zeros(N_CHANNELS).astype(int)
+                    else:
+                        switching_dict[out_connected_node] = np.ones(N_CHANNELS).astype(int)
+
+                self.nodes[node_key].switching_matrix[connected_node] = switching_dict
 
     ###############################################################################
     # network map plot
@@ -203,7 +216,7 @@ class Network:
 
                 for j in range(len(nodes_label_list) - 1):
                     line_label = nodes_label_list[j] + nodes_label_list[j + 1]
-                    if self.lines[line_label].state[channel] == "occupied":
+                    if self.lines[line_label].state[channel] == 0:
                         lightpath_available = False
 
                 if lightpath_available == True:
@@ -226,13 +239,20 @@ class Network:
 
                 for j in range(len(nodes_label_list)-1):
                     line_label = nodes_label_list[j] + nodes_label_list[j+1]
-                    if self.lines[line_label].state[channel] == "occupied":
+                    if self.lines[line_label].state[channel] == 0:
                         lightpath_available = False
 
                 if lightpath_available == True:
                     latency_min = self.weighted_paths['latency'][i]
                     best_path = self.weighted_paths['path'][i]
         return best_path
+
+    ###############################################################################
+    # given a requested connection list, it deploys lightpaths with selected optimization
+    def update_route_space(self):
+        #self._route_space.loc[self._route_space.path == formatted_path, 'CH_' + str(channel)] = 1  # update route_space
+        pass
+
 
     ###############################################################################
     # given a requested connection list, it deploys lightpaths with selected optimization
@@ -258,8 +278,8 @@ class Network:
                 lightpath = Lightpath(signal_power, list(path), channel)    # Lightpath object is used to consider channel info
                 final_signal = self.propagate(lightpath)
 
-                self._route_space.loc[self._route_space.path == formatted_path, 'CH_'+str(channel)] = 1 # update route_space
-
                 connection.signal_power = final_signal.signal_power
                 connection.latency = final_signal.latency
                 connection.snr = 10*np.log10(final_signal.signal_power/final_signal.noise_power)
+
+                self.update_route_space()

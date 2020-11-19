@@ -1,3 +1,4 @@
+import numpy as np
 from Lightpath import *
 from scipy.constants import c
 N_CHANNELS = 10
@@ -7,10 +8,7 @@ class Line:
         self._label = initial_data["label"]
         self._length = initial_data["length"]
         self._successive = {}   # dict of Node objects
-        self._state = []        # channel availabily list
-
-        for i in range(N_CHANNELS):
-            self._state.append("free")
+        self._state = np.ones(N_CHANNELS).astype(int)        # channel availability numpy array
 
     @property
     def label(self):
@@ -56,5 +54,5 @@ class Line:
 
         next_node_label = propagated_object.path[0]
         if isinstance(propagated_object, Lightpath):    # if Lightpath object then manage channels
-            self.state[propagated_object.channel] = "occupied"
+            self.state[propagated_object.channel] = 0
         self.successive[next_node_label].propagate(propagated_object)
