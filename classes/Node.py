@@ -1,4 +1,5 @@
 from Lightpath import *
+from Line import *
 
 class Node:
     def __init__(self, initial_data):
@@ -48,8 +49,15 @@ class Node:
     def switching_matrix(self, value):
         self._switching_matrix = value
 
-    def propagate(self, propagated_object):
+    def propagate(self, propagated_object, previous_node):
         propagated_object.update_path()
         if len(propagated_object.path) != 0:
+            if isinstance(propagated_object, Lightpath) and previous_node != None:    # Switching matrix update
+                self.switching_matrix[previous_node][propagated_object.path[0]][propagated_object.channel] = 0
+                if propagated_object.channel != 0:  # Channel 0 does not have a left adjacent channel
+                    self.switching_matrix[previous_node][propagated_object.path[0]][propagated_object.channel-1] = 0
+                if propagated_object.channel != N_CHANNELS-1: # Last channel does not have a right adjacent channel
+                    self.switching_matrix[previous_node][propagated_object.path[0]][propagated_object.channel+1] = 0
+
             next_line_label = self.label + propagated_object.path[0]
             self.successive[next_line_label].propagate(propagated_object)

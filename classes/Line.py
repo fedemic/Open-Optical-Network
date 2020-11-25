@@ -55,4 +55,4 @@ class Line:
         next_node_label = propagated_object.path[0]
         if isinstance(propagated_object, Lightpath):    # if Lightpath object then manage channels
             self.state[propagated_object.channel] = 0
-        self.successive[next_node_label].propagate(propagated_object)
+        self.successive[next_node_label].propagate(propagated_object, self.label[0])

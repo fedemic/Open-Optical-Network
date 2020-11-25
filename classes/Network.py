@@ -146,7 +146,7 @@ class Network:
     # calls the propagate method of first node in the propagated_object's path
     def propagate(self, propagated_object):
         start_node_key = propagated_object.path[0]
-        self.nodes[start_node_key].propagate(propagated_object)
+        self.nodes[start_node_key].propagate(propagated_object, None)
 
         return propagated_object
 
