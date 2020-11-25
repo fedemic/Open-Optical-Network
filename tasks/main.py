@@ -5,7 +5,7 @@ import random
 import matplotlib.pyplot as plt
 
 # network generation
-net = Network("../resources/nodes.json")
+net = Network("../resources/nodes_full.json")
 net.connect()
 net.draw()
 net.create_paths_database()
@@ -17,7 +17,7 @@ conn_list = []
 initial_data = {}
 signal_power = 1
 
-for i in range(100):
+for i in range(2):
     inout_nodes = random.sample(node_list, 2)
 
     initial_data["input"] = inout_nodes[0]

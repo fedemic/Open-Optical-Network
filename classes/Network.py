@@ -12,27 +12,28 @@ class Network:
         self._lines = {}    # dict of Line objects
         self._weighted_paths = None    # Dataframe: |path|latency|SNR|noise|
         self._route_space = None       # Dataframe: |path|CH_0|...|CH_n|
+        self._data_dict = None  # To store all the network data in the json file
 
         with open(json_filepath, "r") as read_file:
-            data_dict = json.load(read_file)
+            self.data_dict = json.load(read_file)
 
         # _nodes and _lines initialization from json file
         node_dict = {}
         line_dict = {}
 
-        for node_key in data_dict:
+        for node_key in self.data_dict:
             node_dict['label'] = node_key
-            node_dict['position'] = data_dict[node_key]['position']
-            node_dict['connected_nodes'] = data_dict[node_key]['connected_nodes']
+            node_dict['position'] = self.data_dict[node_key]['position']
+            node_dict['connected_nodes'] = self.data_dict[node_key]['connected_nodes']
 
             self._nodes[node_key] = Node(node_dict)
 
-            for conn_node in data_dict[node_key]['connected_nodes']:
+            for conn_node in self.data_dict[node_key]['connected_nodes']:
                 line_label = node_key + conn_node
 
                 # line length evaluation
-                position1 = np.array(data_dict[node_key]['position'])
-                position2 = np.array(data_dict[conn_node]['position'])
+                position1 = np.array(self.data_dict[node_key]['position'])
+                position2 = np.array(self.data_dict[conn_node]['position'])
                 line_length = np.linalg.norm(position1 - position2)
 
                 line_dict["label"] = line_label
@@ -56,6 +57,10 @@ class Network:
     def route_space(self):
         return self._route_space
 
+    @property
+    def data_dict(self):
+        return self._data_dict
+
     @nodes.setter
     def nodes(self, value):
         self._nodes = value
@@ -72,6 +77,10 @@ class Network:
     def route_space(self, value):
         self._route_space = value
 
+    @data_dict.setter
+    def data_dict(self, value):
+        self._data_dict = value
+
     ###############################################################################
     # update of successive dictionaries of nodes and lines and initialize switching matrix
     def connect(self):
@@ -84,15 +93,7 @@ class Network:
                 self.nodes[node_key].successive[line_label] = self.lines[line_label]
                 self.lines[line_label].successive[connected_node] = self.nodes[connected_node]
 
-                # switching matrix definition
-                switching_dict = {}
-                for out_connected_node in self.nodes[node_key].connected_nodes: # considering all possibile combination between connected nodes
-                    if connected_node == out_connected_node:
-                        switching_dict[out_connected_node] = np.zeros(N_CHANNELS).astype(int)
-                    else:
-                        switching_dict[out_connected_node] = np.ones(N_CHANNELS).astype(int)
-
-                self.nodes[node_key].switching_matrix[connected_node] = switching_dict
+                self.nodes[node_key].switching_matrix[connected_node] = self.data_dict[node_key]['switching_matrix'][connected_node]
 
     ###############################################################################
     # network map plot
@@ -105,17 +106,17 @@ class Network:
 
         for line_key in self.lines:
             # source node
-            x1 = self.nodes[line_key[0]].position[0]*1e-3
-            y1 = self.nodes[line_key[0]].position[1]*1e-3
+            x1 = self.nodes[line_key[0]].position[0]
+            y1 = self.nodes[line_key[0]].position[1]
             # destination node
-            x2 = self.nodes[line_key[1]].position[0]*1e-3
-            y2 = self.nodes[line_key[1]].position[1]*1e-3
+            x2 = self.nodes[line_key[1]].position[0]
+            y2 = self.nodes[line_key[1]].position[1]
 
             plt.plot([x1, x2], [y1, y2], linewidth=2, color="k")
 
         for node_key in self.nodes:
-            x_value = self.nodes[node_key].position[0]*1e-3
-            y_value = self.nodes[node_key].position[1]*1e-3
+            x_value = self.nodes[node_key].position[0]
+            y_value = self.nodes[node_key].position[1]
             plt.plot(x_value, y_value, "o", label=node_key, markersize=12)
 
         plt.legend()
