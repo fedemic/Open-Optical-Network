@@ -93,6 +93,7 @@ class Network:
                 self.nodes[node_key].successive[line_label] = self.lines[line_label]
                 self.lines[line_label].successive[connected_node] = self.nodes[connected_node]
 
+                # Switching matrices initialization
                 self.nodes[node_key].switching_matrix[connected_node] = self.data_dict[node_key]['switching_matrix'][connected_node]
 
     ###############################################################################
@@ -294,3 +295,8 @@ class Network:
                 connection.snr = 10*np.log10(final_signal.signal_power/final_signal.noise_power)
 
                 self.update_route_space()
+
+        # Restore the original switching matrices
+        for node_key in self.nodes:
+            for connected_node in self.nodes[node_key].connected_nodes:
+                self.nodes[node_key].switching_matrix[connected_node] = self.data_dict[node_key]['switching_matrix'][connected_node]
