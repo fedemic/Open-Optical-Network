@@ -1,7 +1,6 @@
 import numpy as np
 from Lightpath import *
-from scipy.constants import c
-N_CHANNELS = 10
+from constants import *
 
 class Line:
     def __init__(self, initial_data):

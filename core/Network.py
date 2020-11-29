@@ -5,6 +5,7 @@ import pandas as pd
 from Node import *
 from Line import *
 from Connection import *
+from constants import *
 
 class Network:
     def __init__(self, json_filepath):
