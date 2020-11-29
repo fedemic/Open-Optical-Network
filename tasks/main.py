@@ -1,5 +1,5 @@
 import sys
-sys.path.insert(1, '../classes')
+sys.path.insert(1, '../core')
 from Network import *
 import random
 import matplotlib.pyplot as plt
@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 net = Network("../resources/nodes_not_full.json")
 net.connect()
 net.draw()
-net.create_paths_database()
+net.create_weighted_paths()
 net.create_route_space()
 
 # 100 random requests creation
@@ -17,7 +17,7 @@ conn_list = []
 initial_data = {}
 signal_power = 1
 
-for i in range(100):
+for i in range(3):
     inout_nodes = random.sample(node_list, 2)
 
     initial_data["input"] = inout_nodes[0]

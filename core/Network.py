@@ -154,7 +154,7 @@ class Network:
 
     ###############################################################################
     # generate weighted_paths dataframe considering all possible paths
-    def create_paths_database(self):
+    def create_weighted_paths(self):
         db_dict = {"path": [],
                    "latency": [],
                    "noise": [],
