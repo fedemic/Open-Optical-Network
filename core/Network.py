@@ -269,6 +269,34 @@ class Network:
                 self.route_space.loc[i, 'CH_'+str(k)] = partial_products[k]
 
     ###############################################################################
+    # calculate bit rate according to strategy and path
+    def calculate_bit_rate(self, path, strategy):
+        GSNR = self.weighted_paths['OSNR']['path' == path]
+        ber_coeff = BER_T*RS/BN
+        bit_rate = 0
+
+        if strategy == 'fixed-rate':
+            if GSNR >= 4*ber_coeff:
+                bit_rate = 100e9
+            else:
+                bit_rate = 0
+        elif strategy == 'flex-rate':
+            if GSNR < 4*ber_coeff:
+                bit_rate = 0
+            elif GSNR >= 4*ber_coeff and GSNR < 7*ber_coeff:
+                bit_rate = 100e9
+            elif GSNR >= 7*ber_coeff and GSNR < 80/3*ber_coeff:
+                bit_rate = 200e9
+            else:
+                bit_rate = 400e9
+        elif strategy == 'shannon':
+            bit_rate = 2*RS*np.log2(1+GSNR*BN/RS)
+        else:
+            bit_rate = None
+
+        return bit_rate
+
+    ###############################################################################
     # given a requested connection list, it deploys lightpaths with selected optimization
     def stream(self, connection_list, signal_power, optimize="latency"):
         for connection in connection_list:
