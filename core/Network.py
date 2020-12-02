@@ -27,6 +27,11 @@ class Network:
             node_dict['position'] = self.data_dict[node_key]['position']
             node_dict['connected_nodes'] = self.data_dict[node_key]['connected_nodes']
 
+            if 'transceiver' in self.data_dict[node_key].keys():   # control presence of transceiver field
+                node_dict['transceiver'] = self.data_dict[node_key]['transceiver']
+            else:
+                node_dict['transceiver'] = 'fixed-rate'
+
             self._nodes[node_key] = Node(node_dict)
 
             for conn_node in self.data_dict[node_key]['connected_nodes']:
