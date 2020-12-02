@@ -276,7 +276,11 @@ class Network:
     ###############################################################################
     # calculate bit rate according to strategy and path
     def calculate_bit_rate(self, path, strategy):
-        GSNR = self.weighted_paths['OSNR']['path' == path]
+
+        if path == "":   # stream function could provide an empty path
+            return 0
+
+        GSNR = float(self.weighted_paths.loc[self.weighted_paths['path'] == path, 'OSNR'].values)
         ber_coeff = BER_T*RS/BN
         bit_rate = 0
 
@@ -307,16 +311,21 @@ class Network:
         for connection in connection_list:
             path = ""
             channel = -1
+            bit_rate = 0
             if optimize == "latency":
-                while path == "" and channel <= N_CHANNELS-2:
+                while path == "" and channel <= N_CHANNELS-2 and bit_rate == 0:
                     channel += 1
                     path = self.find_best_latency(connection.input, connection.output, channel)
+                    bit_rate = self.calculate_bit_rate(path, self.nodes[connection.input].transceiver)
             elif optimize == "snr":
-                while path == "" and channel <= N_CHANNELS-2:
+                while path == "" and channel <= N_CHANNELS-2 and bit_rate == 0:
                     channel += 1
                     path = self.find_best_snr(connection.input, connection.output, channel)
+                    bit_rate = self.calculate_bit_rate(path, self.nodes[connection.input].transceiver)
 
-            if path == "":
+
+
+            if path == "" or bit_rate == 0:  # connection rejected
                 connection.snr = None
                 connection.latency = 0
             else:
@@ -327,6 +336,7 @@ class Network:
                 connection.signal_power = final_signal.signal_power
                 connection.latency = final_signal.latency
                 connection.snr = 10*np.log10(final_signal.signal_power/final_signal.noise_power)
+                connection.bit_rate = bit_rate
 
                 self.update_route_space()
 
