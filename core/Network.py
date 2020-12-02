@@ -30,7 +30,7 @@ class Network:
             if 'transceiver' in self.data_dict[node_key].keys():   # control presence of transceiver field
                 node_dict['transceiver'] = self.data_dict[node_key]['transceiver']
             else:
-                node_dict['transceiver'] = 'fixed-rate'
+                node_dict['transceiver'] = 'fixed_rate'
 
             self._nodes[node_key] = Node(node_dict)
 
@@ -113,17 +113,17 @@ class Network:
 
         for line_key in self.lines:
             # source node
-            x1 = self.nodes[line_key[0]].position[0]
-            y1 = self.nodes[line_key[0]].position[1]
+            x1 = self.nodes[line_key[0]].position[0]*1e-3
+            y1 = self.nodes[line_key[0]].position[1]*1e-3
             # destination node
-            x2 = self.nodes[line_key[1]].position[0]
-            y2 = self.nodes[line_key[1]].position[1]
+            x2 = self.nodes[line_key[1]].position[0]*1e-3
+            y2 = self.nodes[line_key[1]].position[1]*1e-3
 
             plt.plot([x1, x2], [y1, y2], linewidth=2, color="k")
 
         for node_key in self.nodes:
-            x_value = self.nodes[node_key].position[0]
-            y_value = self.nodes[node_key].position[1]
+            x_value = self.nodes[node_key].position[0]*1e-3
+            y_value = self.nodes[node_key].position[1]*1e-3
             plt.plot(x_value, y_value, "o", label=node_key, markersize=12)
 
         plt.legend()
@@ -280,16 +280,17 @@ class Network:
         if path == "":   # stream function could provide an empty path
             return 0
 
-        GSNR = float(self.weighted_paths.loc[self.weighted_paths['path'] == path, 'OSNR'].values)
+        GSNR_dB = float(self.weighted_paths.loc[self.weighted_paths['path'] == path, 'OSNR'].values)
+        GSNR = 10**(GSNR_dB/10)
         ber_coeff = BER_T*RS/BN
         bit_rate = 0
 
-        if strategy == 'fixed-rate':
+        if strategy == 'fixed_rate':
             if GSNR >= 4*ber_coeff:
                 bit_rate = 100e9
             else:
                 bit_rate = 0
-        elif strategy == 'flex-rate':
+        elif strategy == 'flex_rate':
             if GSNR < 4*ber_coeff:
                 bit_rate = 0
             elif GSNR >= 4*ber_coeff and GSNR < 7*ber_coeff:
@@ -322,7 +323,6 @@ class Network:
                     channel += 1
                     path = self.find_best_snr(connection.input, connection.output, channel)
                     bit_rate = self.calculate_bit_rate(path, self.nodes[connection.input].transceiver)
-
 
 
             if path == "" or bit_rate == 0:  # connection rejected
