@@ -17,7 +17,7 @@ conn_list = []
 initial_data = {}
 signal_power = 1
 
-for i in range(3):
+for i in range(100):
     inout_nodes = random.sample(node_list, 2)
 
     initial_data["input"] = inout_nodes[0]
@@ -27,12 +27,12 @@ for i in range(3):
     conn_list.append(Connection(initial_data))
 
 # request deployment optimizing latency
-'''net.stream(conn_list, signal_power, optimize="latency")
+net.stream(conn_list, signal_power, optimize="latency")
 
 latency_values = []
 for connection in conn_list:
     latency_values.append(connection.latency)
-'''
+
 # request deployment optimizing SNR
 net.stream(conn_list, signal_power, optimize="snr")
 
@@ -42,12 +42,12 @@ for connection in conn_list:
         snr_values.append(connection.snr)
 
 # results distribution plot
-'''plt.figure()
+plt.figure()
 plt.hist(latency_values)
 plt.xlabel("Latency [s]")
 plt.ylabel("Occurences")
 plt.title("Latency Distribution")
-plt.savefig('../results/latency_distribution_nodes_full.png')'''
+plt.savefig('../results/latency_distribution_nodes_full.png')
 
 plt.figure()
 plt.hist(snr_values, color="r")
