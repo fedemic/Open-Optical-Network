@@ -45,7 +45,7 @@ class Line:
         return self.length/(c*2/3)
 
     def noise_generation(self, signal):
-        return 1e-3 * signal.signal_power * self.length
+        return 1e-9 * signal.signal_power * self.length
 
     def propagate(self, propagated_object):
         propagated_object.update_latency(self.latency_generation())

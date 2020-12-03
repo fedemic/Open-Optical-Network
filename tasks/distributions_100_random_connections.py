@@ -17,7 +17,7 @@ conn_list = []
 initial_data = {}
 signal_power = 1
 
-for i in range(100):
+for i in range(N_CONNECTIONS):
     inout_nodes = random.sample(node_list, 2)
 
     initial_data["input"] = inout_nodes[0]
