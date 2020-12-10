@@ -8,6 +8,9 @@ class Line:
         self._length = initial_data["length"]
         self._successive = {}   # dict of Node objects
         self._state = np.ones(N_CHANNELS).astype(int)        # channel availability numpy array
+        self._n_amplifiers = np.ceil(self._length*1e-3/80)-1    # ---80km---AMP---80km---
+        self._gain = initial_data['amp_gain']
+        self._noise_figure = initial_data['amp_noise_figure']
 
     @property
     def label(self):
@@ -25,6 +28,18 @@ class Line:
     def state(self):
         return self._state
 
+    @property
+    def n_amplifiers(self):
+        return self._n_amplifiers
+
+    @property
+    def gain(self):
+        return self._gain
+
+    @property
+    def noise_figure(self):
+        return self._noise_figure
+
     @label.setter
     def label(self, value):
         self._label = value
@@ -41,6 +56,18 @@ class Line:
     def state(self, value):
         self._state = value
 
+    @n_amplifiers.setter
+    def n_amplifiers(self, value):
+        self._n_amplifiers = value
+
+    @gain.setter
+    def gain(self, value):
+        self._gain = value
+
+    @noise_figure.setter
+    def noise_figure(self, value):
+        self._noise_figure = value
+
     def latency_generation(self):
         return self.length/(c*2/3)
 
@@ -55,3 +82,11 @@ class Line:
         if isinstance(propagated_object, Lightpath):    # if Lightpath object then manage channels
             self.state[propagated_object.channel] = 0
         self.successive[next_node_label].propagate(propagated_object, self.label[0])
+
+    def ase_generation(self):
+        nf_lin = to_linear(self.noise_figure)
+        gain_lin = to_linear(self.gain)
+
+        return self.n_amplifiers*h*F*BN*nf_lin*(gain_lin-1)
+
+
