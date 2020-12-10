@@ -49,6 +49,10 @@ class Network:
                 line_dict['amp_gain'] = AMP_GAIN
                 line_dict['amp_noise_figure'] = AMP_NF
 
+                line_dict['alpha'] = ALPHA
+                line_dict['beta_2'] = BETA_2
+                line_dict['gamma'] = GAMMA
+
                 self._lines[line_label] = Line(line_dict)
 
     @property

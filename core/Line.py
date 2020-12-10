@@ -11,6 +11,9 @@ class Line:
         self._n_amplifiers = np.ceil(self._length*1e-3/80)-1    # ---80km---AMP---80km---
         self._gain = initial_data['amp_gain']
         self._noise_figure = initial_data['amp_noise_figure']
+        self._alpha = initial_data['alpha']         # [dB/km]
+        self._beta_2 = initial_data['beta_2']       # [ps^2/km]
+        self._gamma = initial_data['gamma']         # [(W*m)^-1]
 
     @property
     def label(self):
@@ -40,6 +43,18 @@ class Line:
     def noise_figure(self):
         return self._noise_figure
 
+    @property
+    def alpha(self):
+        return self._alpha
+
+    @property
+    def beta_2(self):
+        return self._beta_2
+
+    @property
+    def gamma(self):
+        return self._gamma
+
     @label.setter
     def label(self, value):
         self._label = value
@@ -67,6 +82,18 @@ class Line:
     @noise_figure.setter
     def noise_figure(self, value):
         self._noise_figure = value
+
+    @alpha.setter
+    def alpha(self, value):
+        self._alpha = value
+
+    @beta_2.setter
+    def beta_2(self, value):
+        self._beta_2 = value
+
+    @gamma.setter
+    def gamma(self, value):
+        self._gamma = value
 
     def latency_generation(self):
         return self.length/(c*2/3)
