@@ -314,12 +314,12 @@ class Network:
             channel = -1
             bit_rate = 0
             if optimize == "latency":
-                while path == "" and channel <= N_CHANNELS-2 and bit_rate == 0:
+                while (path == "" or bit_rate == 0) and channel <= N_CHANNELS-2:
                     channel += 1
                     path = self.find_best_latency(connection.input, connection.output, channel)
                     bit_rate = self.calculate_bit_rate(path, self.nodes[connection.input].transceiver)
             elif optimize == "snr":
-                while path == "" and channel <= N_CHANNELS-2 and bit_rate == 0:
+                while (path == "" or bit_rate == 0) and channel <= N_CHANNELS-2:
                     channel += 1
                     path = self.find_best_snr(connection.input, connection.output, channel)
                     bit_rate = self.calculate_bit_rate(path, self.nodes[connection.input].transceiver)
@@ -344,3 +344,7 @@ class Network:
         for node_key in self.nodes:
             for connected_node in self.nodes[node_key].connected_nodes:
                 self.nodes[node_key].switching_matrix[connected_node] = self.data_dict[node_key]['switching_matrix'][connected_node]
+
+        # Restore the original line occupation arrays
+        for line_key in self.lines:
+            self.lines[line_key].state = np.ones(N_CHANNELS).astype(int)
