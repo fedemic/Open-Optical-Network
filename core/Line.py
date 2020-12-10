@@ -1,6 +1,7 @@
 import numpy as np
 from Lightpath import *
 from constants import *
+from general_functions import *
 
 class Line:
     def __init__(self, initial_data):
@@ -115,5 +116,13 @@ class Line:
         gain_lin = to_linear(self.gain)
 
         return self.n_amplifiers*h*F*BN*nf_lin*(gain_lin-1)
+
+    def nli_generation(self, propagated_object):
+        alpha_linear = to_alpha_linear(self.alpha)
+        l_eff = 1/(2*alpha_linear)
+        eta_nli = (16/(27*pi))*np.log((pi*pi*self.beta_2*RS*RS*N_CHANNELS**(2*RS/F))/(2*alpha_linear))*(self.gamma*self.gamma*alpha_linear*l_eff*l_eff)/(self.beta_2*RS**3)
+        n_span = self.n_amplifiers+1
+
+        return propagated_object.signal_power**(3)*eta_nli*n_span
 
 

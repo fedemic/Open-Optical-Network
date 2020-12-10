@@ -1,18 +1,20 @@
 from scipy.constants import c
 from scipy.constants import h
 from scipy.constants import e
+from scipy.constants import pi
 
 N_CHANNELS = 10
-BER_T = 1e-3
-RS = 32e9
-BN = 12.5e9
-F = 193.414e12  # C band center frequency
+BER_T = 1e-3        # bit error rate
+RS = 32e9           # symbol rate [baud/s]
+DF = 37.5e9         # channel spacing [Hz]
+BN = 12.5e9         # noise bandwidth [Hz]
+F = 193.414e12      # C band center frequency [Hz]
 
-AMP_GAIN = 16
-AMP_NF = 3
+AMP_GAIN = 16       # [dB]
+AMP_NF = 3          # [dB]
 
-ALPHA = 0.2
-BETA_2 = 2.13e-26
-GAMMA = 1.27
+ALPHA = 0.2         # [dB/km]
+BETA_2 = 2.13e-26   # [ps^2/km]
+GAMMA = 1.27        # # [(W*m)^-1]
 
 N_CONNECTIONS = 100
