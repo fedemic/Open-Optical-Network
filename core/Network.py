@@ -6,6 +6,7 @@ from Node import *
 from Line import *
 from Connection import *
 from constants import *
+from general_functions import *
 
 class Network:
     def __init__(self, json_filepath):
@@ -44,6 +45,9 @@ class Network:
 
                 line_dict["label"] = line_label
                 line_dict["length"] = line_length
+
+                line_dict['amp_gain'] = AMP_GAIN
+                line_dict['amp_noise_figure'] = AMP_NF
 
                 self._lines[line_label] = Line(line_dict)
 
@@ -181,7 +185,7 @@ class Network:
                         db_dict["path"].append(formatted_path)
                         db_dict["latency"].append(final_signal.latency)
                         db_dict["noise"].append(final_signal.noise_power)
-                        osnr = 10 * np.log10(final_signal.signal_power / final_signal.noise_power)
+                        osnr = to_db(final_signal.signal_power / final_signal.noise_power)
                         db_dict["OSNR"].append(osnr)
 
         self.weighted_paths = pd.DataFrame(db_dict)
@@ -281,7 +285,7 @@ class Network:
             return 0
 
         GSNR_dB = float(self.weighted_paths.loc[self.weighted_paths['path'] == path, 'OSNR'].values)
-        GSNR = 10**(GSNR_dB/10)
+        GSNR = to_linear(GSNR_dB)
         ber_coeff = BER_T*RS/BN
         bit_rate = 0
 
@@ -335,7 +339,7 @@ class Network:
 
                 connection.signal_power = final_signal.signal_power
                 connection.latency = final_signal.latency
-                connection.snr = 10*np.log10(final_signal.signal_power/final_signal.noise_power)
+                connection.snr = to_db(final_signal.signal_power/final_signal.noise_power)
                 connection.bit_rate = bit_rate
 
                 self.update_route_space()
