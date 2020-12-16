@@ -69,4 +69,6 @@ class Node:
                     self.switching_matrix[previous_node][propagated_object.path[0]][propagated_object.channel+1] = 0
 
             next_line_label = self.label + propagated_object.path[0]
+            propagated_object.signal_power = self.successive[next_line_label].optimized_launch_power # set the optimal signal power for the next line
+
             self.successive[next_line_label].propagate(propagated_object)
