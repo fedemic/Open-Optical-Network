@@ -99,8 +99,10 @@ class Line:
     def latency_generation(self):
         return self.length/(c*2/3)
 
-    def noise_generation(self, signal):
-        return 1e-9 * signal.signal_power * self.length
+    def noise_generation(self, signal):     # linear value returned
+        ase_noise = self.ase_generation()
+        nli_noise = self.nli_generation(signal)
+        return ase_noise + nli_noise
 
     def propagate(self, propagated_object):
         propagated_object.update_latency(self.latency_generation())
