@@ -7,6 +7,7 @@ from Line import *
 from Connection import *
 from constants import *
 from general_functions import *
+from scipy import special
 
 class Network:
     def __init__(self, json_filepath):
@@ -290,20 +291,19 @@ class Network:
 
         GSNR_dB = float(self.weighted_paths.loc[self.weighted_paths['path'] == path, 'OSNR'].values)
         GSNR = to_linear(GSNR_dB)
-        ber_coeff = BER_T*RS/BN
         bit_rate = 0
 
         if strategy == 'fixed_rate':
-            if GSNR >= 4*ber_coeff:
+            if GSNR >= 2*(special.erfcinv(2*BER_T)**2)*RS/BN:
                 bit_rate = 100e9
             else:
                 bit_rate = 0
         elif strategy == 'flex_rate':
-            if GSNR < 4*ber_coeff:
+            if GSNR < 4*BER_T*RS/BN:
                 bit_rate = 0
-            elif GSNR >= 4*ber_coeff and GSNR < 7*ber_coeff:
+            elif GSNR >= 2*(special.erfcinv(2*BER_T)**2)*RS/BN and GSNR < 14/3*(special.erfcinv(3/2*BER_T)**2)*RS/BN:
                 bit_rate = 100e9
-            elif GSNR >= 7*ber_coeff and GSNR < 80/3*ber_coeff:
+            elif GSNR >= 14/3*(special.erfcinv(3/2*BER_T)**2)*RS/BN and GSNR < 10*(special.erfcinv(8/3*BER_T)**2)*RS/BN:
                 bit_rate = 200e9
             else:
                 bit_rate = 400e9

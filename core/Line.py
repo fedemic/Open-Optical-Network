@@ -123,6 +123,6 @@ class Line:
         eta_nli = (16/(27*pi))*np.log((pi*pi*self.beta_2*RS*RS*N_CHANNELS**(2*RS/F))/(2*alpha_linear))*(self.gamma*self.gamma*alpha_linear*l_eff*l_eff)/(self.beta_2*RS**3)
         n_span = self.n_amplifiers+1
 
-        return propagated_object.signal_power**(3)*eta_nli*n_span
+        return propagated_object.signal_power**(3)*eta_nli*n_span*BN
 
 
