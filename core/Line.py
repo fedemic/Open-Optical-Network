@@ -103,10 +103,7 @@ class Line:
         ase_noise = self.ase_generation()
         nli_noise = self.nli_generation(signal)
 
-        print(ase_noise)
-        print(nli_noise)
-
-        return ase_noise + nli_noise
+        return ase_noise + nli_noise*1e-12  # CORRECTIVE FACTOR
 
     def propagate(self, propagated_object):
         propagated_object.update_latency(self.latency_generation())

@@ -19,4 +19,4 @@ ALPHA = 0.2         # [dB/km]
 BETA_2 = 2.13e-26   # [(m*Hz^2)^-1]
 GAMMA = 1.27e-3     # [(W*m)^-1]
 
-N_CONNECTIONS = 2
+N_CONNECTIONS = 100
