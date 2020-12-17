@@ -284,31 +284,38 @@ class Network:
 
     ###############################################################################
     # calculate bit rate according to strategy and path
-    def calculate_bit_rate(self, path, strategy):
+    def calculate_bit_rate(self, lightpath, strategy):
 
+        path = "".join(lightpath.path) # cast path from list to string
+        formatted_path = ""            # adding the "->" for the formatted path
+        for element in path:
+            formatted_path += element + "->"
+        formatted_path = formatted_path[:-2]
+
+        rs = lightpath.rs
         if path == "":   # stream function could provide an empty path
             return 0
 
-        GSNR_dB = float(self.weighted_paths.loc[self.weighted_paths['path'] == path, 'OSNR'].values)
+        GSNR_dB = float(self.weighted_paths.loc[self.weighted_paths['path'] == formatted_path, 'OSNR'].values)
         GSNR = to_linear(GSNR_dB)
         bit_rate = 0
 
         if strategy == 'fixed_rate':
-            if GSNR >= 2*(special.erfcinv(2*BER_T)**2)*RS/BN:
+            if GSNR >= 2*(special.erfcinv(2*BER_T)**2)*rs/BN:
                 bit_rate = 100e9
             else:
                 bit_rate = 0
         elif strategy == 'flex_rate':
-            if GSNR < 4*BER_T*RS/BN:
+            if GSNR < 4*BER_T*rs/BN:
                 bit_rate = 0
-            elif GSNR >= 2*(special.erfcinv(2*BER_T)**2)*RS/BN and GSNR < 14/3*(special.erfcinv(3/2*BER_T)**2)*RS/BN:
+            elif GSNR >= 2*(special.erfcinv(2*BER_T)**2)*rs/BN and GSNR < 14/3*(special.erfcinv(3/2*BER_T)**2)*rs/BN:
                 bit_rate = 100e9
-            elif GSNR >= 14/3*(special.erfcinv(3/2*BER_T)**2)*RS/BN and GSNR < 10*(special.erfcinv(8/3*BER_T)**2)*RS/BN:
+            elif GSNR >= 14/3*(special.erfcinv(3/2*BER_T)**2)*rs/BN and GSNR < 10*(special.erfcinv(8/3*BER_T)**2)*rs/BN:
                 bit_rate = 200e9
             else:
                 bit_rate = 400e9
         elif strategy == 'shannon':
-            bit_rate = 2*RS*np.log2(1+GSNR*BN/RS)
+            bit_rate = 2*RS*np.log2(1+GSNR*BN/rs)
         else:
             bit_rate = None
 
@@ -323,22 +330,24 @@ class Network:
             bit_rate = 0
             if optimize == "latency":
                 while (path == "" or bit_rate == 0) and channel <= N_CHANNELS-2:
-                    channel += 1
-                    path = self.find_best_latency(connection.input, connection.output, channel)
-                    bit_rate = self.calculate_bit_rate(path, self.nodes[connection.input].transceiver)
+                    channel += 1                                                                            # next channel
+                    path = self.find_best_latency(connection.input, connection.output, channel)             # find a possible path
+                    path = path.split("->")                                                                 # remove -> from the path
+                    lightpath = Lightpath(signal_power, list(path), channel)                                # create a lightpath with the found path
+                    bit_rate = self.calculate_bit_rate(lightpath, self.nodes[connection.input].transceiver) # check the bitrate for the created lightpath
             elif optimize == "snr":
                 while (path == "" or bit_rate == 0) and channel <= N_CHANNELS-2:
                     channel += 1
                     path = self.find_best_snr(connection.input, connection.output, channel)
-                    bit_rate = self.calculate_bit_rate(path, self.nodes[connection.input].transceiver)
+                    path = path.split("->")
+                    lightpath = Lightpath(signal_power, list(path), channel)
+                    bit_rate = self.calculate_bit_rate(lightpath, self.nodes[connection.input].transceiver)
 
 
             if path == "" or bit_rate == 0:  # connection rejected
                 connection.snr = None
                 connection.latency = 0
             else:
-                path = path.split("->")
-                lightpath = Lightpath(signal_power, list(path), channel)    # Lightpath object is used to consider channel info
                 final_signal = self.propagate(lightpath)
 
                 connection.signal_power = final_signal.signal_power

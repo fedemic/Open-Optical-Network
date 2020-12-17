@@ -102,6 +102,10 @@ class Line:
     def noise_generation(self, signal):     # linear value returned
         ase_noise = self.ase_generation()
         nli_noise = self.nli_generation(signal)
+
+        print(ase_noise)
+        print(nli_noise)
+
         return ase_noise + nli_noise
 
     def propagate(self, propagated_object):
@@ -121,21 +125,23 @@ class Line:
         return p_ase
 
     def nli_generation(self, propagated_object):
-        alpha_linear = to_alpha_linear(self.alpha)
+        alpha_linear = to_alpha_linear(self.alpha*1e-3) # from km to m
         l_eff = 1/(2*alpha_linear)
-        eta_nli = (16/(27*pi))*np.log((pi*pi*self.beta_2*RS*RS*N_CHANNELS**(2*RS/F))/(2*alpha_linear))*(self.gamma*self.gamma*alpha_linear*l_eff*l_eff)/(self.beta_2*RS**3)
+        eta_nli = (16/(27*pi))*np.log((pi*pi*self.beta_2*RS*RS*N_CHANNELS**(2*RS/DF))/(2*alpha_linear))*(self.gamma*self.gamma*alpha_linear*l_eff*l_eff)/(self.beta_2*RS**3)
         n_span = self.n_amplifiers+1
 
         p_nli = propagated_object.signal_power**(3)*eta_nli*n_span*BN
+
         return p_nli
 
     def optimized_launch_power(self):
-        alpha_linear = to_alpha_linear(self.alpha)
+        alpha_linear = to_alpha_linear(self.alpha*1e-3) # from km to m
         l_eff = 1/(2*alpha_linear)
-        eta_nli = (16/(27*pi))*np.log((pi*pi*self.beta_2*RS*RS*N_CHANNELS**(2*RS/F))/(2*alpha_linear))*(self.gamma*self.gamma*alpha_linear*l_eff*l_eff)/(self.beta_2*RS**3)
+        eta_nli = (16/(27*pi))*np.log((pi*pi*self.beta_2*RS*RS*N_CHANNELS**(2*RS/DF))/(2*alpha_linear))*(self.gamma*self.gamma*alpha_linear*l_eff*l_eff)/(self.beta_2*RS**3)
         p_ase = self.ase_generation()
 
         p_opt = (p_ase/(2*eta_nli))**(1/3)
+
         return p_opt
 
 

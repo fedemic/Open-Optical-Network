@@ -13,6 +13,22 @@ class Lightpath(SignalInformation):
     def channel(self):
         return self._channel
 
+    @property
+    def rs(self):
+        return self._rs
+
+    @property
+    def df(self):
+        return self._df
+
     @channel.setter
     def channel(self, value):
         self._channel = value
+
+    @rs.setter
+    def rs(self, value):
+        self._rs = value
+
+    @df.setter
+    def df(self, value):
+        self._df = value
