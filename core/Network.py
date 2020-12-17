@@ -2,12 +2,14 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import random
 from Node import *
 from Line import *
 from Connection import *
 from constants import *
 from general_functions import *
 from scipy import special
+
 
 class Network:
     def __init__(self, json_filepath):
@@ -322,6 +324,47 @@ class Network:
         return bit_rate
 
     ###############################################################################
+    def deploy_traffic_matrix(self, traffic_matrix):
+        node_list = list(self.nodes.keys())
+        matrix_fully_deployed = False
+        initial_data = {}
+        signal_power = 1
+        conn_list = []
+        n_nodes = len(self.nodes)
+        empty_traffic_matrix = np.zeros((n_nodes, n_nodes))
+
+        while matrix_fully_deployed == False:
+            inout_nodes = random.sample(node_list, 2)
+            source_index = node_list.index(inout_nodes[0])
+            destination_index = node_list.index(inout_nodes[1])
+
+            requested_bit_rate = traffic_matrix[source_index, destination_index]
+            if requested_bit_rate != 0:
+                initial_data["input"] = inout_nodes[0]
+                initial_data["output"] = inout_nodes[1]
+                initial_data["signal_power"] = signal_power
+
+                dummy_list = []
+                conn_list.append(Connection(initial_data))
+                dummy_list.append(conn_list[-1])
+                self.stream(dummy_list, signal_power, 'snr')
+                if conn_list[-1].snr != None:
+                    if traffic_matrix[source_index, destination_index] >= conn_list[-1].bit_rate:
+                        traffic_matrix[source_index, destination_index] -= conn_list[-1].bit_rate
+                    else:
+                        conn_list[-1].bit_rate = traffic_matrix[source_index, destination_index]
+                        traffic_matrix[source_index, destination_index] = 0
+
+                print(traffic_matrix)
+
+            if np.count_nonzero(traffic_matrix) == 0:
+                matrix_fully_deployed = True
+
+        return conn_list
+
+
+
+    ###############################################################################
     # given a requested connection list, it deploys lightpaths with selected optimization
     def stream(self, connection_list, signal_power, optimize="latency"):
         for connection in connection_list:
@@ -357,6 +400,10 @@ class Network:
 
                 self.update_route_space()
 
+
+
+        # Controllo e reset in deploy_traffic_matrix
+        """""
         # Restore the original switching matrices
         for node_key in self.nodes:
             for connected_node in self.nodes[node_key].connected_nodes:
@@ -365,3 +412,4 @@ class Network:
         # Restore the original line occupation arrays
         for line_key in self.lines:
             self.lines[line_key].state = np.ones(N_CHANNELS).astype(int)
+        """""
