@@ -192,7 +192,7 @@ class Network:
                         db_dict["path"].append(formatted_path)
                         db_dict["latency"].append(final_signal.latency)
                         db_dict["noise"].append(final_signal.noise_power)
-                        osnr = to_db(final_signal.signal_power / final_signal.noise_power)
+                        osnr = to_db(1/final_signal.inv_gsnr)
                         db_dict["OSNR"].append(osnr)
 
         self.weighted_paths = pd.DataFrame(db_dict)

@@ -4,6 +4,7 @@ class SignalInformation:
         self._noise_power = 0
         self._latency = 0
         self._path = path
+        self._inv_gsnr = 0
 
     @property
     def signal_power(self):
@@ -21,6 +22,10 @@ class SignalInformation:
     def path(self):
         return self._path
 
+    @property
+    def inv_gsnr(self):
+        return self._inv_gsnr
+
     @signal_power.setter
     def signal_power(self, value):
         self._signal_power = value
@@ -37,6 +42,10 @@ class SignalInformation:
     def path(self, value):
         self._path = value
 
+    @inv_gsnr.setter
+    def inv_gsnr(self, value):
+        self._inv_gsnr = value
+
     def update_signal_power(self, increment):
         self.signal_power += increment
 
@@ -48,3 +57,6 @@ class SignalInformation:
 
     def update_path(self):
         self.path.pop(0)
+
+    def update_inv_gsnr(self, increment):
+        self.inv_gsnr += increment

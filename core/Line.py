@@ -103,11 +103,12 @@ class Line:
         ase_noise = self.ase_generation()
         nli_noise = self.nli_generation(signal)
 
-        return ase_noise + nli_noise*1e-12  # CORRECTIVE FACTOR
+        return ase_noise + nli_noise
 
     def propagate(self, propagated_object):
         propagated_object.update_latency(self.latency_generation())
         propagated_object.update_noise_power(self.noise_generation(propagated_object))
+        propagated_object.update_inv_gsnr(self.noise_generation(propagated_object)/propagated_object.signal_power)  # (Pase + Pnli) / Pch
 
         next_node_label = propagated_object.path[0]
         if isinstance(propagated_object, Lightpath):    # if Lightpath object then manage channels
@@ -136,8 +137,9 @@ class Line:
         l_eff = 1/(2*alpha_linear)
         eta_nli = (16/(27*pi))*np.log((pi*pi*self.beta_2*RS*RS*N_CHANNELS**(2*RS/DF))/(2*alpha_linear))*(self.gamma*self.gamma*alpha_linear*l_eff*l_eff)/(self.beta_2*RS**3)
         p_ase = self.ase_generation()
+        n_span = self.n_amplifiers - 1
 
-        p_opt = (p_ase/(2*eta_nli))**(1/3)
+        p_opt = (p_ase/(2*eta_nli*BN*n_span))**(1/3)
 
         return p_opt
 
