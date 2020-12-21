@@ -9,7 +9,7 @@ class Line:
         self._length = initial_data["length"]
         self._successive = {}   # dict of Node objects
         self._state = np.ones(N_CHANNELS).astype(int)        # channel availability numpy array
-        self._n_amplifiers = np.ceil(self._length*1e-3/80)-1    # ---80km---AMP---80km---
+        self._n_amplifiers = np.ceil(self._length*1e-3/80)+1    # BOOST---80km---AMP---80km---
         self._gain = initial_data['amp_gain']
         self._noise_figure = initial_data['amp_noise_figure']
         self._alpha = initial_data['alpha']         # [dB/km]
@@ -125,7 +125,7 @@ class Line:
         alpha_linear = to_alpha_linear(self.alpha*1e-3) # from km to m
         l_eff = 1/(2*alpha_linear)
         eta_nli = (16/(27*pi))*np.log((pi*pi*self.beta_2*RS*RS*N_CHANNELS**(2*RS/DF))/(2*alpha_linear))*(self.gamma*self.gamma*alpha_linear*l_eff*l_eff)/(self.beta_2*RS**3)
-        n_span = self.n_amplifiers+1
+        n_span = self.n_amplifiers-1
 
         p_nli = propagated_object.signal_power**(3)*eta_nli*n_span*BN
 

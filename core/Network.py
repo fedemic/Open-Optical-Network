@@ -217,7 +217,7 @@ class Network:
 
                         db_dict['path'].append(formatted_path)
                         for channel in range(N_CHANNELS):
-                            db_dict['CH_'+str(channel)].append(0)
+                            db_dict['CH_'+str(channel)].append(1)
 
         self.route_space = pd.DataFrame(db_dict)
 
@@ -231,12 +231,10 @@ class Network:
         for i in indexes_range:
             if self.weighted_paths['path'][i][0] == source and self.weighted_paths['path'][i][-1] == destination and self.weighted_paths['OSNR'][i] > osnr_max:
                 lightpath_available = True  # initialization
-                nodes_label_list = self.weighted_paths['path'][i].split("->")
 
-                for j in range(len(nodes_label_list) - 1):
-                    line_label = nodes_label_list[j] + nodes_label_list[j + 1]
-                    if self.lines[line_label].state[channel] == 0:
-                        lightpath_available = False
+                # Check availability in route_space dataframe
+                if int(self.route_space.loc[self.route_space['path'] == self.weighted_paths['path'][i], 'CH_'+str(channel)].values) == 0:
+                    lightpath_available = False
 
                 if lightpath_available == True:
                     osnr_max = self.weighted_paths['OSNR'][i]
@@ -254,12 +252,10 @@ class Network:
         for i in indexes_range:
             if self.weighted_paths['path'][i][0] == source and self.weighted_paths['path'][i][-1] == destination and self.weighted_paths['latency'][i] < latency_min:
                 lightpath_available = True  # initialization
-                nodes_label_list = self.weighted_paths['path'][i].split("->")
 
-                for j in range(len(nodes_label_list)-1):
-                    line_label = nodes_label_list[j] + nodes_label_list[j+1]
-                    if self.lines[line_label].state[channel] == 0:
-                        lightpath_available = False
+                # Check availability in route_space dataframe
+                if int(self.route_space.loc[self.route_space['path'] == self.weighted_paths['path'][i], 'CH_' + str(channel)].values) == 0:
+                    lightpath_available = False
 
                 if lightpath_available == True:
                     latency_min = self.weighted_paths['latency'][i]
@@ -344,18 +340,14 @@ class Network:
                 initial_data["output"] = inout_nodes[1]
                 initial_data["signal_power"] = signal_power
 
-                dummy_list = []
                 conn_list.append(Connection(initial_data))
-                dummy_list.append(conn_list[-1])
-                self.stream(dummy_list, signal_power, 'snr')
+                self.stream([conn_list[-1]], signal_power, 'snr')
                 if conn_list[-1].snr != None:
                     if traffic_matrix[source_index, destination_index] >= conn_list[-1].bit_rate:
                         traffic_matrix[source_index, destination_index] -= conn_list[-1].bit_rate
                     else:
                         conn_list[-1].bit_rate = traffic_matrix[source_index, destination_index]
                         traffic_matrix[source_index, destination_index] = 0
-
-                print(traffic_matrix)
 
             if np.count_nonzero(traffic_matrix) == 0:
                 matrix_fully_deployed = True
