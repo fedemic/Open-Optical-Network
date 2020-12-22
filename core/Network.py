@@ -328,33 +328,59 @@ class Network:
         conn_list = []
         n_nodes = len(self.nodes)
         empty_traffic_matrix = np.zeros((n_nodes, n_nodes))
+        full_cells_list = []
+        cells_list = []
+        allocated_traffic = True
 
-        while matrix_fully_deployed == False:
-            inout_nodes = random.sample(node_list, 2)
-            source_index = node_list.index(inout_nodes[0])
-            destination_index = node_list.index(inout_nodes[1])
+        for node1 in node_list:
+            for node2 in node_list:
+                full_cells_list.append([node1, node2])
+
+        cells_list = list(full_cells_list)
+
+        while matrix_fully_deployed == False and allocated_traffic == True:
+            if cells_list == []:
+                cells_list = list(full_cells_list)
+                allocated_traffic = False
+
+            inout_nodes = random.sample(cells_list, 1)
+            cells_list.remove(inout_nodes[0])
+            source_index = node_list.index(inout_nodes[0][0])
+            destination_index = node_list.index(inout_nodes[0][1])
 
             requested_bit_rate = traffic_matrix[source_index, destination_index]
             if requested_bit_rate != 0:
-                initial_data["input"] = inout_nodes[0]
-                initial_data["output"] = inout_nodes[1]
+                initial_data["input"] = inout_nodes[0][0]
+                initial_data["output"] = inout_nodes[0][1]
                 initial_data["signal_power"] = signal_power
 
                 conn_list.append(Connection(initial_data))
                 self.stream([conn_list[-1]], signal_power, 'snr')
                 if conn_list[-1].snr != None:
+                    allocated_traffic = True
                     if traffic_matrix[source_index, destination_index] >= conn_list[-1].bit_rate:
                         traffic_matrix[source_index, destination_index] -= conn_list[-1].bit_rate
                     else:
                         conn_list[-1].bit_rate = traffic_matrix[source_index, destination_index]
                         traffic_matrix[source_index, destination_index] = 0
-
+                    print(traffic_matrix)
             if np.count_nonzero(traffic_matrix) == 0:
                 matrix_fully_deployed = True
 
-        return conn_list
+        return matrix_fully_deployed
 
+    ###############################################################################
+    # restore switching matrices state (adjacent channels occupation)
+    def restore_switching_matrices(self):
+        for node_key in self.nodes:
+            for source_node in self.nodes[node_key].connected_nodes:
+                for destination_node in self.nodes[node_key].connected_nodes:
+                    if source_node != destination_node:
+                        source_line_label = source_node + node_key
+                        destination_line_label = node_key + destination_node
 
+                        state_array = np.bitwise_or(self.lines[source_line_label].state, self.lines[destination_line_label].state)
+                        self.nodes[node_key].switching_matrix[source_node][destination_node] = state_array
 
     ###############################################################################
     # given a requested connection list, it deploys lightpaths with selected optimization
@@ -392,7 +418,21 @@ class Network:
 
                 self.update_route_space()
 
+        self.restore_switching_matrices()
+        self.update_route_space()
 
+    ###############################################################################
+    # given a requested connection list, it deploys lightpaths with selected optimization
+    def reset_network(self):
+        for node_key in self.nodes:
+            for connected_node in self.nodes[node_key].connected_nodes:
+                self.nodes[node_key].switching_matrix[connected_node] = \
+                self.data_dict[node_key]['switching_matrix'][connected_node]
+
+        for line_key in self.lines:
+            self.lines[line_key].state = np.ones(N_CHANNELS).astype(int)
+
+        self.create_route_space()
 
         # Controllo e reset in deploy_traffic_matrix
         """""
