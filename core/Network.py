@@ -6,8 +6,6 @@ import random
 from Node import *
 from Line import *
 from Connection import *
-from constants import *
-from general_functions import *
 from scipy import special
 
 
@@ -230,13 +228,8 @@ class Network:
 
         for i in indexes_range:
             if self.weighted_paths['path'][i][0] == source and self.weighted_paths['path'][i][-1] == destination and self.weighted_paths['OSNR'][i] > osnr_max:
-                lightpath_available = True  # initialization
-
                 # Check availability in route_space dataframe
-                if int(self.route_space.loc[self.route_space['path'] == self.weighted_paths['path'][i], 'CH_'+str(channel)].values) == 0:
-                    lightpath_available = False
-
-                if lightpath_available == True:
+                if int(self.route_space.loc[self.route_space['path'] == self.weighted_paths['path'][i], 'CH_'+str(channel)].values) == 1:
                     osnr_max = self.weighted_paths['OSNR'][i]
                     best_path = self.weighted_paths['path'][i]
 
@@ -251,15 +244,11 @@ class Network:
 
         for i in indexes_range:
             if self.weighted_paths['path'][i][0] == source and self.weighted_paths['path'][i][-1] == destination and self.weighted_paths['latency'][i] < latency_min:
-                lightpath_available = True  # initialization
-
                 # Check availability in route_space dataframe
-                if int(self.route_space.loc[self.route_space['path'] == self.weighted_paths['path'][i], 'CH_' + str(channel)].values) == 0:
-                    lightpath_available = False
-
-                if lightpath_available == True:
+                if int(self.route_space.loc[self.route_space['path'] == self.weighted_paths['path'][i], 'CH_' + str(channel)].values) == 1:
                     latency_min = self.weighted_paths['latency'][i]
                     best_path = self.weighted_paths['path'][i]
+
         return best_path
 
     ###############################################################################
@@ -296,7 +285,6 @@ class Network:
 
         GSNR_dB = float(self.weighted_paths.loc[self.weighted_paths['path'] == formatted_path, 'OSNR'].values)
         GSNR = to_linear(GSNR_dB)
-        bit_rate = 0
 
         if strategy == 'fixed_rate':
             if GSNR >= 2*(special.erfcinv(2*BER_T)**2)*rs/BN:
@@ -320,28 +308,43 @@ class Network:
         return bit_rate
 
     ###############################################################################
+    # It streams connections starting from a given traffic matrix
     def deploy_traffic_matrix(self, traffic_matrix):
         node_list = list(self.nodes.keys())
-        matrix_fully_deployed = False
-        initial_data = {}
+        initial_data = {}                     # dict for connection constructor
         signal_power = 1
-        conn_list = []
-        n_nodes = len(self.nodes)
-        empty_traffic_matrix = np.zeros((n_nodes, n_nodes))
-        full_cells_list = []
-        cells_list = []
+        conn_list = []                        # list of deployed connections
+        full_cells_list = []                  # list of all possible node-to-node requests
+        conn_to_be_streamed = []              # list of connections to be streamed
         allocated_traffic = True
+        matrix_fully_deployed = False
 
         for node1 in node_list:
             for node2 in node_list:
                 full_cells_list.append([node1, node2])
 
-        cells_list = list(full_cells_list)
+        cells_list = list(full_cells_list)          # cast to list to have different pointer
 
         while matrix_fully_deployed == False and allocated_traffic == True:
             if cells_list == []:
-                cells_list = list(full_cells_list)
                 allocated_traffic = False
+                cells_list = list(full_cells_list)
+                self.stream(conn_to_be_streamed, signal_power, 'snr')
+                for connection in conn_to_be_streamed:
+                    if connection.snr != None:
+                        allocated_traffic = True
+                        source_index = node_list.index(connection.input)
+                        destination_index = node_list.index(connection.output)
+                        if traffic_matrix[source_index, destination_index] >= connection.bit_rate:
+                            traffic_matrix[source_index, destination_index] -= connection.bit_rate
+                        else:
+                            connection.bit_rate = traffic_matrix[source_index, destination_index]
+                            traffic_matrix[source_index, destination_index] = 0
+                print(traffic_matrix)
+                conn_list.extend(conn_to_be_streamed)
+                conn_to_be_streamed = []
+                if np.count_nonzero(traffic_matrix) == 0:
+                    matrix_fully_deployed = True
 
             inout_nodes = random.sample(cells_list, 1)
             cells_list.remove(inout_nodes[0])
@@ -354,20 +357,10 @@ class Network:
                 initial_data["output"] = inout_nodes[0][1]
                 initial_data["signal_power"] = signal_power
 
-                conn_list.append(Connection(initial_data))
-                self.stream([conn_list[-1]], signal_power, 'snr')
-                if conn_list[-1].snr != None:
-                    allocated_traffic = True
-                    if traffic_matrix[source_index, destination_index] >= conn_list[-1].bit_rate:
-                        traffic_matrix[source_index, destination_index] -= conn_list[-1].bit_rate
-                    else:
-                        conn_list[-1].bit_rate = traffic_matrix[source_index, destination_index]
-                        traffic_matrix[source_index, destination_index] = 0
-                    print(traffic_matrix)
-            if np.count_nonzero(traffic_matrix) == 0:
-                matrix_fully_deployed = True
+                connection = Connection(initial_data)
+                conn_to_be_streamed.append(connection)
 
-        return matrix_fully_deployed
+        return conn_list
 
     ###############################################################################
     # restore switching matrices state (adjacent channels occupation)
@@ -389,21 +382,16 @@ class Network:
             path = ""
             channel = -1
             bit_rate = 0
-            if optimize == "latency":
-                while (path == "" or bit_rate == 0) and channel <= N_CHANNELS-2:
-                    channel += 1                                                                            # next channel
-                    path = self.find_best_latency(connection.input, connection.output, channel)             # find a possible path
-                    path = path.split("->")                                                                 # remove -> from the path
-                    lightpath = Lightpath(signal_power, list(path), channel)                                # create a lightpath with the found path
-                    bit_rate = self.calculate_bit_rate(lightpath, self.nodes[connection.input].transceiver) # check the bitrate for the created lightpath
-            elif optimize == "snr":
-                while (path == "" or bit_rate == 0) and channel <= N_CHANNELS-2:
-                    channel += 1
-                    path = self.find_best_snr(connection.input, connection.output, channel)
-                    path = path.split("->")
-                    lightpath = Lightpath(signal_power, list(path), channel)
-                    bit_rate = self.calculate_bit_rate(lightpath, self.nodes[connection.input].transceiver)
 
+            while (path == "" or bit_rate == 0) and channel <= N_CHANNELS-2:
+                channel += 1                                                                            # next channel
+                if optimize == "latency":
+                    path = self.find_best_latency(connection.input, connection.output, channel)             # find a possible path
+                elif optimize == "snr":
+                    path = self.find_best_snr(connection.input, connection.output, channel)
+                path = path.split("->")                                                                 # remove -> from the path
+                lightpath = Lightpath(signal_power, list(path), channel)                                # create a lightpath with the found path
+                bit_rate = self.calculate_bit_rate(lightpath, self.nodes[connection.input].transceiver) # check the bitrate for the created lightpath
 
             if path == "" or bit_rate == 0:  # connection rejected
                 connection.snr = None
@@ -422,26 +410,13 @@ class Network:
         self.update_route_space()
 
     ###############################################################################
-    # given a requested connection list, it deploys lightpaths with selected optimization
+    # Reset line state arrays and nodes switching matrices
     def reset_network(self):
         for node_key in self.nodes:
             for connected_node in self.nodes[node_key].connected_nodes:
-                self.nodes[node_key].switching_matrix[connected_node] = \
-                self.data_dict[node_key]['switching_matrix'][connected_node]
+                self.nodes[node_key].switching_matrix[connected_node] = self.data_dict[node_key]['switching_matrix'][connected_node]
 
         for line_key in self.lines:
             self.lines[line_key].state = np.ones(N_CHANNELS).astype(int)
 
         self.create_route_space()
-
-        # Controllo e reset in deploy_traffic_matrix
-        """""
-        # Restore the original switching matrices
-        for node_key in self.nodes:
-            for connected_node in self.nodes[node_key].connected_nodes:
-                self.nodes[node_key].switching_matrix[connected_node] = self.data_dict[node_key]['switching_matrix'][connected_node]
-
-        # Restore the original line occupation arrays
-        for line_key in self.lines:
-            self.lines[line_key].state = np.ones(N_CHANNELS).astype(int)
-        """""

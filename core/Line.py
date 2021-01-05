@@ -1,6 +1,5 @@
 import numpy as np
 from Lightpath import *
-from constants import *
 from general_functions import *
 
 class Line:
@@ -9,11 +8,11 @@ class Line:
         self._length = initial_data["length"]
         self._successive = {}   # dict of Node objects
         self._state = np.ones(N_CHANNELS).astype(int)        # channel availability numpy array
-        self._n_amplifiers = np.ceil(self._length*1e-3/80)+1    # BOOST---80km---AMP---80km---
+        self._n_amplifiers = np.ceil(self._length*1e-3/80)+1    # BOOST---80km---AMP---80km---PRE_AMP
         self._gain = initial_data['amp_gain']
         self._noise_figure = initial_data['amp_noise_figure']
         self._alpha = initial_data['alpha']         # [dB/km]
-        self._beta_2 = initial_data['beta_2']       # [ps^2/km]
+        self._beta_2 = initial_data['beta_2']       # [(m*Hz^2)^-1]
         self._gamma = initial_data['gamma']         # [(W*m)^-1]
 
     @property
@@ -106,9 +105,11 @@ class Line:
         return ase_noise + nli_noise
 
     def propagate(self, propagated_object):
+        noise = self.noise_generation(propagated_object)
+
         propagated_object.update_latency(self.latency_generation())
-        propagated_object.update_noise_power(self.noise_generation(propagated_object))
-        propagated_object.update_inv_gsnr(self.noise_generation(propagated_object)/propagated_object.signal_power)  # (Pase + Pnli) / Pch
+        propagated_object.update_noise_power(noise)
+        propagated_object.update_inv_gsnr(noise/propagated_object.signal_power)  # (Pase + Pnli) / Pch
 
         next_node_label = propagated_object.path[0]
         if isinstance(propagated_object, Lightpath):    # if Lightpath object then manage channels

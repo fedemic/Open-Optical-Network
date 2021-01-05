@@ -1,5 +1,4 @@
 from Lightpath import *
-from constants import *
 
 class Node:
     def __init__(self, initial_data):
