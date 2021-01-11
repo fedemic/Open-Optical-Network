@@ -1,0 +1,1 @@
+Flex_rate DATAMaximum M: 49Maximum bit rate: 400.0 GpbsMinimum bit rate: 400.0 GbpsAverage bit rate: 400.0 Gbps
