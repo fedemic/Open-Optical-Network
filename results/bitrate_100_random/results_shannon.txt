@@ -1,0 +1,4 @@
+Fixed rate transceiver results
+Number of rejected connections: 0
+Average bit rate: 460466374674.67126
+Total capacity: 46046637467467.125

@@ -1,113 +1,69 @@
 import sys
 sys.path.insert(1, '../core')
 from Network import *
-import random
-import matplotlib.pyplot as plt
 
-# networks generation
-# NET 1 -> FIXED RATE TRANSCEIVER
-net1 = Network("../resources/nodes_full_fixed_rate.json")
-net1.connect()
-net1.create_weighted_paths()
-net1.create_route_space()
-
-# NET 2 -> FLEX RATE TRANSCEIVER
-net2 = Network("../resources/nodes_full_flex_rate.json")
-net2.connect()
-net2.create_weighted_paths()
-net2.create_route_space()
-
-# NET 3 -> SHANNON RATE TRANSCEIVER
-net3 = Network("../resources/nodes_full_shannon.json")
-net3.connect()
-net3.create_weighted_paths()
-net3.create_route_space()
-
-# 100 random requests creation
-node_list = list(net1.nodes.keys())
-conn_list1 = []
-conn_list2 = []
-conn_list3 = []
-initial_data = {}
-signal_power = 1
-
-for i in range(N_CONNECTIONS):
-    inout_nodes = random.sample(node_list, 2)
-
-    initial_data["input"] = inout_nodes[0]
-    initial_data["output"] = inout_nodes[1]
-    initial_data["signal_power"] = signal_power
-
-    conn_list1.append(Connection(initial_data))
-    conn_list2.append(Connection(initial_data))
-    conn_list3.append(Connection(initial_data))
-
-# request deployment optimizing SNR for each net
-net1.stream(conn_list1, signal_power, optimize="snr")
-net2.stream(conn_list2, signal_power, optimize="snr")
-net3.stream(conn_list3, signal_power, optimize="snr")
-
-bit_rate_values1 = []
-bit_rate_values2 = []
-bit_rate_values3 = []
-rejected_connections1 = 0
-rejected_connections2 = 0
-rejected_connections3 = 0
-
-for connection in conn_list1:
-    if connection.snr != None:
-        bit_rate_values1.append(connection.bit_rate)
+for i in range(3):
+    if i == 0:
+        transceiver = "fixed_rate"
+    elif i == 1:
+        transceiver = "flex_rate"
     else:
-        rejected_connections1 += 1
+        transceiver = "shannon"
 
-for connection in conn_list2:
-    if connection.snr != None:
-        bit_rate_values2.append(connection.bit_rate)
-    else:
-        rejected_connections2 += 1
+    net = Network("../resources/nodes_full_" + transceiver + ".json")
+    net.connect()
+    net.create_weighted_paths()
+    net.create_route_space()
 
-for connection in conn_list3:
-    if connection.snr != None:
-        bit_rate_values3.append(connection.bit_rate)
-    else:
-        rejected_connections3 += 1
+    # random connections generation on the first iteration (so the same connections are employed in the analysis)
+    if i == 0:
+        # 100 random requests creation
+        node_list = list(net.nodes.keys())
+        conn_list = []
+        initial_data = {}
+        signal_power = 1
 
-# results distribution plot
-plt.figure()
-plt.subplot(131)
-plt.hist(bit_rate_values1, color="r")
-plt.xlabel("Bit-rate [Gbps]")
-plt.ylabel("Occurences")
-plt.title("Fixed rate transceiver")
-plt.subplot(132)
-plt.hist(bit_rate_values2, color="r")
-plt.xlabel("Bit-rate [Gbps]")
-plt.ylabel("Occurences")
-plt.title("Flex rate transceiver")
-plt.subplot(133)
-plt.hist(bit_rate_values3, color="r")
-plt.xlabel("Bit-rate [Gbps]")
-plt.ylabel("Occurences")
-plt.title("Shannon transceiver")
-plt.savefig('../results/bit_rate_distributions.png')
+        for j in range(N_CONNECTIONS):
+            inout_nodes = random.sample(node_list, 2)
 
-bit_rate_average1 = np.mean(bit_rate_values1)
-total_capacity1 = np.sum(bit_rate_values1)
-bit_rate_average2 = np.mean(bit_rate_values2)
-total_capacity2 = np.sum(bit_rate_values2)
-bit_rate_average3 = np.mean(bit_rate_values3)
-total_capacity3 = np.sum(bit_rate_values3)
-print('Fixed rate transceiver results')
-print('Number of rejected connections: ' + str(rejected_connections1))
-print('Average bit rate: ' + str(bit_rate_average1))
-print('Total capacity: ' + str(total_capacity1) +"\n")
+            initial_data["input"] = inout_nodes[0]
+            initial_data["output"] = inout_nodes[1]
+            initial_data["signal_power"] = signal_power
 
-print('Flex rate transceiver results')
-print('Number of rejected connections: ' + str(rejected_connections2))
-print('Average bit rate: ' + str(bit_rate_average2))
-print('Total capacity: ' + str(total_capacity2) +"\n")
+            conn_list.append(Connection(initial_data))
 
-print('Shannon transceiver results')
-print('Number of rejected connections: ' + str(rejected_connections3))
-print('Average bit rate: ' + str(bit_rate_average3))
-print('Total capacity: ' + str(total_capacity3) +"\n")
+    # request deployment optimizing SNR for each net
+    deployed_conn_list = list(conn_list)
+    net.stream(deployed_conn_list, signal_power, optimize="snr")
+
+    bit_rate_values = []
+    rejected_connections = 0
+
+    for connection in deployed_conn_list:
+        if connection.snr != None:
+            bit_rate_values.append(connection.bit_rate)
+        else:
+            rejected_connections += 1
+
+    # results distribution plot
+    plt.figure()
+    plt.hist(bit_rate_values, color="r")
+    plt.xlabel("Bit-rate [Gbps]")
+    plt.ylabel("Occurences")
+    plt.title(transceiver+" transceiver")
+    plt.savefig("../results/bitrate_100_random/"+transceiver+"_bit_rate_distributions.png")
+
+    bit_rate_average = get_average_bitrate(deployed_conn_list)
+    total_capacity = get_total_capacity(deployed_conn_list)
+
+    # results file
+    with open("../results/bitrate_100_random/results_"+transceiver+".txt", 'w') as file:
+        file.write('Fixed rate transceiver results\n')
+        file.write('Number of rejected connections: ' + str(rejected_connections)+"\n")
+        file.write('Average bit rate: ' + str(bit_rate_average)+"\n")
+        file.write('Total capacity: ' + str(total_capacity) +"\n")
+
+    print('Fixed rate transceiver results')
+    print('Number of rejected connections: ' + str(rejected_connections))
+    print('Average bit rate: ' + str(bit_rate_average))
+    print('Total capacity: ' + str(total_capacity) +"\n")
