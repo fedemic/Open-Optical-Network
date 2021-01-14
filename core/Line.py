@@ -1,6 +1,6 @@
-import numpy as np
-from Lightpath import *
-from general_functions import *
+from .Lightpath import *
+from .general_functions import *
+
 
 class Line:
     def __init__(self, initial_data):
@@ -124,7 +124,7 @@ class Line:
         return p_ase
 
     def nli_generation(self, propagated_object):
-        alpha_linear = to_alpha_linear(self.alpha*1e-3) # from km to m
+        alpha_linear = to_alpha_linear(self.alpha*1e-3)   # from km to m
         l_eff = 1/(2*alpha_linear)
         eta_nli = (16/(27*pi))*np.log((pi*pi*self.beta_2*RS*RS*N_CHANNELS**(2*RS/DF))/(2*alpha_linear))*(self.gamma*self.gamma*alpha_linear*l_eff*l_eff)/(self.beta_2*RS**3)
         n_span = self.n_amplifiers-1
@@ -134,7 +134,7 @@ class Line:
         return p_nli
 
     def optimized_launch_power(self):
-        alpha_linear = to_alpha_linear(self.alpha*1e-3) # from km to m
+        alpha_linear = to_alpha_linear(self.alpha*1e-3)   # from km to m
         l_eff = 1/(2*alpha_linear)
         eta_nli = (16/(27*pi))*np.log((pi*pi*self.beta_2*RS*RS*N_CHANNELS**(2*RS/DF))/(2*alpha_linear))*(self.gamma*self.gamma*alpha_linear*l_eff*l_eff)/(self.beta_2*RS**3)
         p_ase = self.ase_generation()
@@ -143,8 +143,3 @@ class Line:
         p_opt = (p_ase/(2*eta_nli*BN*n_span))**(1/3)
 
         return p_opt
-
-
-
-
-

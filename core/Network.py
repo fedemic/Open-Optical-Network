@@ -1,11 +1,9 @@
 import json
-import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 import random
-from Node import *
-from Line import *
-from Connection import *
+from .Node import *
+from .Line import *
+from .Connection import *
 from scipy import special
 
 
@@ -254,6 +252,7 @@ class Network:
     ###############################################################################
     # given a requested connection list, it deploys lightpaths with selected optimization
     def update_route_space(self):
+
         indexes_range = self.route_space.index
         for i in indexes_range:     # dataframe rows index
             partial_products = np.ones(N_CHANNELS).astype(int)      # initialization of partial products
@@ -263,7 +262,7 @@ class Network:
                 line_label = nodes_label_list[j] + nodes_label_list[j + 1]
                 partial_products *= self.lines[line_label].state
 
-                if j != 0: # first node is not taken into account
+                if j != 0:   # first node is not taken into account
                     partial_products *= self.nodes[nodes_label_list[j]].switching_matrix[nodes_label_list[j-1]][nodes_label_list[j+1]]
 
             for k in range(N_CHANNELS):     # k is the channel
@@ -273,7 +272,7 @@ class Network:
     # calculate bit rate according to strategy and path
     def calculate_bit_rate(self, lightpath, strategy):
 
-        path = "".join(lightpath.path) # cast path from list to string
+        path = "".join(lightpath.path)    # cast path from list to string
         formatted_path = ""            # adding the "->" for the formatted path
         for element in path:
             formatted_path += element + "->"
@@ -283,25 +282,25 @@ class Network:
         if path == "":   # stream function could provide an empty path
             return 0
 
-        GSNR_dB = float(self.weighted_paths.loc[self.weighted_paths['path'] == formatted_path, 'OSNR'].values)
-        GSNR = to_linear(GSNR_dB)
+        gsnr_db = float(self.weighted_paths.loc[self.weighted_paths['path'] == formatted_path, 'OSNR'].values)
+        gsnr = to_linear(gsnr_db)
 
         if strategy == 'fixed_rate':
-            if GSNR >= 2*(special.erfcinv(2*BER_T)**2)*rs/BN:
+            if gsnr >= 2*(special.erfcinv(2*BER_T)**2)*rs/BN:
                 bit_rate = 100e9
             else:
                 bit_rate = 0
         elif strategy == 'flex_rate':
-            if GSNR < 4*BER_T*rs/BN:
+            if gsnr < 4*BER_T*rs/BN:
                 bit_rate = 0
-            elif GSNR >= 2*(special.erfcinv(2*BER_T)**2)*rs/BN and GSNR < 14/3*(special.erfcinv(3/2*BER_T)**2)*rs/BN:
+            elif 2*(special.erfcinv(2*BER_T)**2)*rs/BN <= gsnr < 14/3*(special.erfcinv(3/2*BER_T)**2)*rs/BN:
                 bit_rate = 100e9
-            elif GSNR >= 14/3*(special.erfcinv(3/2*BER_T)**2)*rs/BN and GSNR < 10*(special.erfcinv(8/3*BER_T)**2)*rs/BN:
+            elif 14/3*(special.erfcinv(3/2*BER_T)**2)*rs/BN <= gsnr < 10*(special.erfcinv(8/3*BER_T)**2)*rs/BN:
                 bit_rate = 200e9
             else:
                 bit_rate = 400e9
         elif strategy == 'shannon':
-            bit_rate = 2*RS*np.log2(1+GSNR*BN/rs)
+            bit_rate = 2*RS*np.log2(1+gsnr*BN/rs)
         else:
             bit_rate = None
 
@@ -325,13 +324,13 @@ class Network:
 
         cells_list = list(full_cells_list)          # cast to list to have different pointer
 
-        while matrix_fully_deployed == False and allocated_traffic == True:
+        while matrix_fully_deployed is False and allocated_traffic is True:
             if cells_list == []:
                 allocated_traffic = False
                 cells_list = list(full_cells_list)
                 self.stream(conn_to_be_streamed, signal_power, 'snr')
                 for connection in conn_to_be_streamed:
-                    if connection.snr != None:
+                    if connection.snr is not None:
                         allocated_traffic = True
                         source_index = node_list.index(connection.input)
                         destination_index = node_list.index(connection.output)
@@ -382,16 +381,17 @@ class Network:
             path = ""
             channel = -1
             bit_rate = 0
+            lightpath = None   # lightpath initialization
 
             while (path == "" or bit_rate == 0) and channel <= N_CHANNELS-2:
                 channel += 1                                                                            # next channel
                 if optimize == "latency":
-                    path = self.find_best_latency(connection.input, connection.output, channel)             # find a possible path
+                    path = self.find_best_latency(connection.input, connection.output, channel)       # find a possible path
                 elif optimize == "snr":
                     path = self.find_best_snr(connection.input, connection.output, channel)
                 path = path.split("->")                                                                 # remove -> from the path
                 lightpath = Lightpath(signal_power, list(path), channel)                                # create a lightpath with the found path
-                bit_rate = self.calculate_bit_rate(lightpath, self.nodes[connection.input].transceiver) # check the bitrate for the created lightpath
+                bit_rate = self.calculate_bit_rate(lightpath, self.nodes[connection.input].transceiver)     # check the bitrate for the created lightpath
 
             if path == "" or bit_rate == 0:  # connection rejected
                 connection.snr = None

@@ -1,6 +1,6 @@
 import sys
-sys.path.insert(1, '../core')
-from Network import *
+sys.path.insert(1, '../')
+from core.Network import *
 
 for i in range(3):
     if i == 0:
@@ -14,8 +14,9 @@ for i in range(3):
     net.connect()
     net.create_weighted_paths()
     net.create_route_space()
-    M = 50
+    M = 1
 
+    conn_list = []
     n_nodes = len(net.nodes)
     traffic_matrix = np.zeros((n_nodes, n_nodes))
 
@@ -43,4 +44,4 @@ for i in range(3):
     plot_distribution(conn_list, "latency", "../results/traffic_matrix/"+transceiver+"/latency_distribution.png")
 
     net.route_space.to_csv("../results/traffic_matrix/"+transceiver+"/route_space.csv")
-    net.weighted_paths.to_csv("../results/traffic_matrix/"+transceiver+"/weigthed_paths.csv")
+    net.weighted_paths.to_csv("../results/traffic_matrix/"+transceiver+"/weighted_paths.csv")

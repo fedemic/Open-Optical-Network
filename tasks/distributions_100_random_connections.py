@@ -1,6 +1,7 @@
 import sys
-sys.path.insert(1, '../core')
-from Network import *
+sys.path.insert(1, '../')
+from core.Network import *
+
 
 for i in range(2):
     if i == 0:
@@ -15,13 +16,14 @@ for i in range(2):
     net.create_weighted_paths()
     net.create_route_space()
 
+    conn_list = []
+    initial_data = {}
+    signal_power = 1
+
     # random connections generation on the first iteration (so the same connections are employed in the analysis)
     if i == 0:
         # 100 random requests creation
         node_list = list(net.nodes.keys())
-        conn_list = []
-        initial_data = {}
-        signal_power = 1
 
         for j in range(N_CONNECTIONS):
             inout_nodes = random.sample(node_list, 2)
@@ -49,21 +51,21 @@ for i in range(2):
 
     snr_values = []
     for connection in deployed_conn_list:
-        if connection.snr != None:
+        if connection.snr is not None:
             snr_values.append(connection.snr)
 
     # results distribution plot
     plt.figure()
     plt.hist(latency_values)
     plt.xlabel("Latency [s]")
-    plt.ylabel("Occurences")
+    plt.ylabel("Occurrences")
     plt.title("Latency Distribution")
     plt.savefig("../results/snr_latency_100_random/"+file_name+"/latency_distribution.png")
 
     plt.figure()
     plt.hist(snr_values, color="r")
     plt.xlabel("SNR [dB]")
-    plt.ylabel("Occurences")
+    plt.ylabel("Occurrences")
     plt.title("SNR Distribution")
     plt.savefig("../results/snr_latency_100_random/"+file_name+"/snr_distribution.png")
 

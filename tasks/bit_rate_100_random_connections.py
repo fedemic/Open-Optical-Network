@@ -1,6 +1,6 @@
 import sys
-sys.path.insert(1, '../core')
-from Network import *
+sys.path.insert(1, '../')
+from core.Network import *
 
 for i in range(3):
     if i == 0:
@@ -15,13 +15,14 @@ for i in range(3):
     net.create_weighted_paths()
     net.create_route_space()
 
+    conn_list = []
+    initial_data = {}
+    signal_power = 1
+
     # random connections generation on the first iteration (so the same connections are employed in the analysis)
     if i == 0:
         # 100 random requests creation
         node_list = list(net.nodes.keys())
-        conn_list = []
-        initial_data = {}
-        signal_power = 1
 
         for j in range(N_CONNECTIONS):
             inout_nodes = random.sample(node_list, 2)
@@ -40,7 +41,7 @@ for i in range(3):
     rejected_connections = 0
 
     for connection in deployed_conn_list:
-        if connection.snr != None:
+        if connection.snr is not None:
             bit_rate_values.append(connection.bit_rate)
         else:
             rejected_connections += 1
@@ -49,7 +50,7 @@ for i in range(3):
     plt.figure()
     plt.hist(bit_rate_values, color="r")
     plt.xlabel("Bit-rate [Gbps]")
-    plt.ylabel("Occurences")
+    plt.ylabel("Occurrences")
     plt.title(transceiver+" transceiver")
     plt.savefig("../results/bitrate_100_random/"+transceiver+"_bit_rate_distributions.png")
 
@@ -59,11 +60,11 @@ for i in range(3):
     # results file
     with open("../results/bitrate_100_random/results_"+transceiver+".txt", 'w') as file:
         file.write('Fixed rate transceiver results\n')
-        file.write('Number of rejected connections: ' + str(rejected_connections)+"\n")
-        file.write('Average bit rate: ' + str(bit_rate_average)+"\n")
-        file.write('Total capacity: ' + str(total_capacity) +"\n")
+        file.write('Number of rejected connections: ' + str(rejected_connections) + "\n")
+        file.write('Average bit rate: ' + str(bit_rate_average) + "\n")
+        file.write('Total capacity: ' + str(total_capacity) + "\n")
 
     print('Fixed rate transceiver results')
     print('Number of rejected connections: ' + str(rejected_connections))
     print('Average bit rate: ' + str(bit_rate_average))
-    print('Total capacity: ' + str(total_capacity) +"\n")
+    print('Total capacity: ' + str(total_capacity) + "\n")

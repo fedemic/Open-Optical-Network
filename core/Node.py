@@ -1,4 +1,5 @@
-from Lightpath import *
+from .Lightpath import *
+
 
 class Node:
     def __init__(self, initial_data):
@@ -60,14 +61,15 @@ class Node:
     def propagate(self, propagated_object, previous_node):
         propagated_object.update_path()
         if len(propagated_object.path) != 0:
-            if isinstance(propagated_object, Lightpath) and previous_node != None:    # Switching matrix update
+            if isinstance(propagated_object, Lightpath) and previous_node is not None:    # Switching matrix update
                 self.switching_matrix[previous_node][propagated_object.path[0]][propagated_object.channel] = 0
                 if propagated_object.channel != 0:  # Channel 0 does not have a left adjacent channel
                     self.switching_matrix[previous_node][propagated_object.path[0]][propagated_object.channel-1] = 0
-                if propagated_object.channel != N_CHANNELS-1: # Last channel does not have a right adjacent channel
+                if propagated_object.channel != N_CHANNELS-1:   # Last channel does not have a right adjacent channel
                     self.switching_matrix[previous_node][propagated_object.path[0]][propagated_object.channel+1] = 0
 
             next_line_label = self.label + propagated_object.path[0]
-            propagated_object.signal_power = self.successive[next_line_label].optimized_launch_power() # set the optimal signal power for the next line
+            # set the optimal signal power for the next line
+            propagated_object.signal_power = self.successive[next_line_label].optimized_launch_power()
 
             self.successive[next_line_label].propagate(propagated_object)
