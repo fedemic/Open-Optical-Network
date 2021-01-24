@@ -16,12 +16,12 @@ for i in range(2):
     net.create_weighted_paths()
     net.create_route_space()
 
-    conn_list = []
     initial_data = {}
-    signal_power = 1
+    signal_power = 1e-3
 
     # random connections generation on the first iteration (so the same connections are employed in the analysis)
     if i == 0:
+        conn_list = []
         # 100 random requests creation
         node_list = list(net.nodes.keys())
 

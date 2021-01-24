@@ -142,13 +142,13 @@ class Network:
         path = ""
         paths_list = []
 
-        def explore_node(current_node, destination, path):
-            path += current_node.label
+        def explore_node(current_node, destination_node_label, path_string):
+            path_string += current_node.label
             for node_under_analysis in current_node.connected_nodes:
-                if node_under_analysis == destination:
-                    paths_list.append(path + destination)
-                elif node_under_analysis not in path:
-                    explore_node(self.nodes[node_under_analysis], destination, path)
+                if node_under_analysis == destination_node_label:
+                    paths_list.append(path_string + destination_node_label)
+                elif node_under_analysis not in path_string:
+                    explore_node(self.nodes[node_under_analysis], destination_node_label, path_string)
 
         if source != destination:
             explore_node(self.nodes[source], destination, path)
@@ -339,7 +339,7 @@ class Network:
                         else:
                             connection.bit_rate = traffic_matrix[source_index, destination_index]
                             traffic_matrix[source_index, destination_index] = 0
-                print(traffic_matrix)
+
                 conn_list.extend(conn_to_be_streamed)
                 conn_to_be_streamed = []
                 if np.count_nonzero(traffic_matrix) == 0:
@@ -401,7 +401,7 @@ class Network:
 
                 connection.signal_power = final_signal.signal_power
                 connection.latency = final_signal.latency
-                connection.snr = to_db(final_signal.signal_power/final_signal.noise_power)
+                connection.snr = to_db(1/final_signal.inv_gsnr)
                 connection.bit_rate = bit_rate
 
                 self.update_route_space()

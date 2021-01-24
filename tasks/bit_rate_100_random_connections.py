@@ -15,12 +15,12 @@ for i in range(3):
     net.create_weighted_paths()
     net.create_route_space()
 
-    conn_list = []
     initial_data = {}
-    signal_power = 1
+    signal_power = 1e-3
 
     # random connections generation on the first iteration (so the same connections are employed in the analysis)
     if i == 0:
+        conn_list = []
         # 100 random requests creation
         node_list = list(net.nodes.keys())
 
@@ -59,12 +59,12 @@ for i in range(3):
 
     # results file
     with open("../results/bitrate_100_random/results_"+transceiver+".txt", 'w') as file:
-        file.write('Fixed rate transceiver results\n')
+        file.write(transceiver + ' transceiver results\n')
         file.write('Number of rejected connections: ' + str(rejected_connections) + "\n")
         file.write('Average bit rate: ' + str(bit_rate_average) + "\n")
         file.write('Total capacity: ' + str(total_capacity) + "\n")
 
-    print('Fixed rate transceiver results')
+    print(transceiver + ' transceiver results')
     print('Number of rejected connections: ' + str(rejected_connections))
     print('Average bit rate: ' + str(bit_rate_average))
     print('Total capacity: ' + str(total_capacity) + "\n")

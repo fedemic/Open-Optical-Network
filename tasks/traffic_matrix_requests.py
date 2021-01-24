@@ -32,13 +32,15 @@ for i in range(3):
         file.write("Maximum M: " + str(M-2)+"\n")
         file.write("Maximum bit rate: " + str(get_max_bitrate(conn_list)/1e9) + " Gpbs\n")
         file.write("Minimum bit rate: " + str(get_min_bitrate(conn_list)/1e9) + " Gbps\n")
-        file.write("Average bit rate: " + str(get_average_bitrate(conn_list)/1e9) + " Gbps")
+        file.write("Average bit rate: " + str(get_average_bitrate(conn_list)/1e9) + " Gbps\n")
+        file.write("Total capacity: " + str(get_total_capacity(conn_list) / 1e9) + " Gbps")
 
     print(transceiver.capitalize() + " DATA")
     print("Maximum M: " + str(M-2))
     print("Maximum bit rate: " + str(get_max_bitrate(conn_list)/1e9) + " Gpbs")
     print("Minimum bit rate: " + str(get_min_bitrate(conn_list)/1e9) + " Gbps")
     print("Average bit rate: " + str(get_average_bitrate(conn_list)/1e9) + " Gbps")
+    print("Total capacity: " + str(get_total_capacity(conn_list) / 1e9) + " Gbps")
 
     plot_distribution(conn_list, "bit_rate", "../results/traffic_matrix/"+transceiver+"/bit_rate_distribution.png")
     plot_distribution(conn_list, "latency", "../results/traffic_matrix/"+transceiver+"/latency_distribution.png")
