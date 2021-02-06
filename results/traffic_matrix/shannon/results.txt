@@ -1,1 +1,6 @@
-Shannon DATAMaximum M: 49Maximum bit rate: 502.0955999343054 GpbsMinimum bit rate: 360.4811793341673 GbpsAverage bit rate: 465.0372921244762 Gbps
+Shannon DATA
+Maximum M: 17
+Maximum bit rate: 502.0955999343054 Gpbs
+Minimum bit rate: 46.015025720798825 Gbps
+Average bit rate: 415.23014415832847 Gbps
+Total capacity: 53979.9187405827 Gbps

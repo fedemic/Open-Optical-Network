@@ -1,1 +1,6 @@
-Fixed_rate DATAMaximum M: 49Maximum bit rate: 100.0 GpbsMinimum bit rate: 100.0 GbpsAverage bit rate: 100.0 Gbps
+Fixed_rate DATA
+Maximum M: 4
+Maximum bit rate: 100.0 Gpbs
+Minimum bit rate: 100.0 Gbps
+Average bit rate: 100.0 Gbps
+Total capacity: 13100.0 Gbps

@@ -1,4 +1,4 @@
 shannon transceiver results
 Number of rejected connections: 0
-Average bit rate: 455239261309.2752
-Total capacity: 45523926130927.52
+Average bit rate: 456747902244.88007
+Total capacity: 45674790224488.01
