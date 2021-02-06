@@ -1,6 +1,7 @@
 import json
 import pandas as pd
 import random
+import copy
 from .Node import *
 from .Line import *
 from .Connection import *
@@ -107,7 +108,7 @@ class Network:
                 self.lines[line_label].successive[connected_node] = self.nodes[connected_node]
 
                 # Switching matrices initialization
-                self.nodes[node_key].switching_matrix[connected_node] = self.data_dict[node_key]['switching_matrix'][connected_node]
+                self.nodes[node_key].switching_matrix[connected_node] = copy.deepcopy(self.data_dict[node_key]['switching_matrix'][connected_node])
 
     ###############################################################################
     # network map plot
@@ -216,18 +217,26 @@ class Network:
                             db_dict['CH_'+str(channel)].append(1)
 
         self.route_space = pd.DataFrame(db_dict)
+        self.update_route_space()
 
     ###############################################################################
     # return path with highest snr between source and destination, considering a specific channel
     def find_best_snr(self, source, destination, channel):
-        indexes_range = self.weighted_paths.index
         osnr_max = min(self.weighted_paths['OSNR'].values)
         best_path = ""
 
-        for i in indexes_range:
-            if self.weighted_paths['path'][i][0] == source and self.weighted_paths['path'][i][-1] == destination and self.weighted_paths['OSNR'][i] > osnr_max:
-                # Check availability in route_space dataframe
-                if int(self.route_space.loc[self.route_space['path'] == self.weighted_paths['path'][i], 'CH_'+str(channel)].values) == 1:
+        for i, row in self.weighted_paths.iterrows():
+            if row['path'][0] == source and row['path'][-1] == destination and row['OSNR'] > osnr_max:
+                product = 1
+                path = list(row['path'].split('->'))
+                for j in range(len(path)-1):
+                    line_label = path[j] + path[j+1]
+                    product *= self.lines[line_label].state[channel]
+                    if j != 0:
+                        product *= self.nodes[path[j]].switching_matrix[path[j-1]][path[j+1]][channel]
+
+                # Check availability by means of product
+                if product == 1:
                     osnr_max = self.weighted_paths['OSNR'][i]
                     best_path = self.weighted_paths['path'][i]
 
@@ -236,14 +245,21 @@ class Network:
     ###############################################################################
     # return path with lowest latency between source and destination, considering a specific channel
     def find_best_latency(self, source, destination, channel):
-        indexes_range = self.weighted_paths.index
         latency_min = max(self.weighted_paths['latency'].values)
         best_path = ""
 
-        for i in indexes_range:
-            if self.weighted_paths['path'][i][0] == source and self.weighted_paths['path'][i][-1] == destination and self.weighted_paths['latency'][i] < latency_min:
-                # Check availability in route_space dataframe
-                if int(self.route_space.loc[self.route_space['path'] == self.weighted_paths['path'][i], 'CH_' + str(channel)].values) == 1:
+        for i, row in self.weighted_paths.iterrows():
+            if row['path'][0] == source and row['path'][-1] == destination and row['latency'] < latency_min:
+                product = 1
+                path = list(row['path'].split('->'))
+                for j in range(len(path) - 1):
+                    line_label = path[j] + path[j + 1]
+                    product *= self.lines[line_label].state[channel]
+                    if j != 0:
+                        product *= self.nodes[path[j]].switching_matrix[path[j-1]][path[j+1]][channel]
+
+                # Check availability by means of product
+                if product == 1:
                     latency_min = self.weighted_paths['latency'][i]
                     best_path = self.weighted_paths['path'][i]
 
@@ -252,26 +268,23 @@ class Network:
     ###############################################################################
     # given a requested connection list, it deploys lightpaths with selected optimization
     def update_route_space(self):
-
-        indexes_range = self.route_space.index
-        for i in indexes_range:     # dataframe rows index
+        for i, row in self.route_space.iterrows():     # dataframe rows index
             partial_products = np.ones(N_CHANNELS).astype(int)      # initialization of partial products
-            nodes_label_list = self.route_space['path'][i].split("->")
+            path = row['path'].split("->")
 
-            for j in range(len(nodes_label_list)-1):    # nodes in path index
-                line_label = nodes_label_list[j] + nodes_label_list[j + 1]
+            for j in range(len(path)-1):    # nodes in path index
+                line_label = path[j] + path[j+1]
                 partial_products *= self.lines[line_label].state
 
                 if j != 0:   # first node is not taken into account
-                    partial_products *= self.nodes[nodes_label_list[j]].switching_matrix[nodes_label_list[j-1]][nodes_label_list[j+1]]
+                    partial_products *= self.nodes[path[j]].switching_matrix[path[j-1]][path[j+1]]
 
             for k in range(N_CHANNELS):     # k is the channel
-                self.route_space.loc[i, 'CH_'+str(k)] = partial_products[k]
+                row['CH_'+str(k)] = partial_products[k]
 
     ###############################################################################
     # calculate bit rate according to strategy and path
     def calculate_bit_rate(self, lightpath, strategy):
-
         path = "".join(lightpath.path)    # cast path from list to string
         formatted_path = ""            # adding the "->" for the formatted path
         for element in path:
@@ -350,8 +363,7 @@ class Network:
             source_index = node_list.index(inout_nodes[0][0])
             destination_index = node_list.index(inout_nodes[0][1])
 
-            requested_bit_rate = traffic_matrix[source_index, destination_index]
-            if requested_bit_rate != 0:
+            if traffic_matrix[source_index, destination_index] != 0:
                 initial_data["input"] = inout_nodes[0][0]
                 initial_data["output"] = inout_nodes[0][1]
                 initial_data["signal_power"] = signal_power
@@ -372,7 +384,8 @@ class Network:
                         destination_line_label = node_key + destination_node
 
                         state_array = np.bitwise_or(self.lines[source_line_label].state, self.lines[destination_line_label].state)
-                        self.nodes[node_key].switching_matrix[source_node][destination_node] = state_array
+                        mask = np.bitwise_and(state_array, self.data_dict[node_key]['switching_matrix'][source_node][destination_node])
+                        self.nodes[node_key].switching_matrix[source_node][destination_node] = mask
 
     ###############################################################################
     # given a requested connection list, it deploys lightpaths with selected optimization
@@ -404,8 +417,6 @@ class Network:
                 connection.snr = to_db(1/final_signal.inv_gsnr)
                 connection.bit_rate = bit_rate
 
-                self.update_route_space()
-
         self.restore_switching_matrices()
         self.update_route_space()
 
@@ -414,8 +425,7 @@ class Network:
     def reset_network(self):
         for node_key in self.nodes:
             for connected_node in self.nodes[node_key].connected_nodes:
-                self.nodes[node_key].switching_matrix[connected_node] = self.data_dict[node_key]['switching_matrix'][connected_node]
-
+                self.nodes[node_key].switching_matrix[connected_node] = copy.deepcopy(self.data_dict[node_key]['switching_matrix'][connected_node])
         for line_key in self.lines:
             self.lines[line_key].state = np.ones(N_CHANNELS).astype(int)
 

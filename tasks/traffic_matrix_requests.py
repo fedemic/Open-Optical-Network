@@ -5,10 +5,13 @@ from core.Network import *
 for i in range(3):
     if i == 0:
         transceiver = "fixed_rate"
+        #M = 4
     elif i == 1:
         transceiver = "flex_rate"
+        #M = 16
     else:
         transceiver = "shannon"
+        #M = 17
 
     net = Network("../resources/nodes_full_"+transceiver+".json")
     net.connect()

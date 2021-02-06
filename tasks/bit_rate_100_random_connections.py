@@ -34,7 +34,7 @@ for i in range(3):
             conn_list.append(Connection(initial_data))
 
     # request deployment optimizing SNR for each net
-    deployed_conn_list = list(conn_list)
+    deployed_conn_list = copy.deepcopy(conn_list)
     net.stream(deployed_conn_list, signal_power, optimize="snr")
 
     bit_rate_values = []

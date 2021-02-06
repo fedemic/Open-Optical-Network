@@ -24,7 +24,6 @@ for i in range(2):
         conn_list = []
         # 100 random requests creation
         node_list = list(net.nodes.keys())
-
         for j in range(N_CONNECTIONS):
             inout_nodes = random.sample(node_list, 2)
 
@@ -35,18 +34,19 @@ for i in range(2):
             conn_list.append(Connection(initial_data))
 
     # request deployment optimizing latency
-    deployed_conn_list = list(conn_list)
+    deployed_conn_list = copy.deepcopy(conn_list)
     net.stream(deployed_conn_list, signal_power, optimize="latency")
 
     latency_values = []
     for connection in deployed_conn_list:
-        latency_values.append(connection.latency)
+        if connection.latency != 0:
+            latency_values.append(connection.latency)
 
     # reset of the lines states and switching matrices
     net.reset_network()
 
     # request deployment optimizing SNR
-    deployed_conn_list = list(conn_list)
+    deployed_conn_list = copy.deepcopy(conn_list)
     net.stream(deployed_conn_list, signal_power, optimize="snr")
 
     snr_values = []
@@ -69,6 +69,6 @@ for i in range(2):
     plt.title("SNR Distribution")
     plt.savefig("../results/snr_latency_100_random/"+file_name+"/snr_distribution.png")
 
-    # Not requested
+    # Export CSV
     net.route_space.to_csv("../results/snr_latency_100_random/"+file_name+"/route_space.csv")
     net.weighted_paths.to_csv("../results/snr_latency_100_random/"+file_name+"/weighted_paths.csv")
