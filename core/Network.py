@@ -280,7 +280,7 @@ class Network:
                     partial_products *= self.nodes[path[j]].switching_matrix[path[j-1]][path[j+1]]
 
             for k in range(N_CHANNELS):     # k is the channel
-                row['CH_'+str(k)] = partial_products[k]
+                self.route_space.loc[i, 'CH_'+str(k)] = partial_products[k]
 
     ###############################################################################
     # calculate bit rate according to strategy and path

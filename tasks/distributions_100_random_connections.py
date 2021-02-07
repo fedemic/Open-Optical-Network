@@ -42,6 +42,8 @@ for i in range(2):
         if connection.latency != 0:
             latency_values.append(connection.latency)
 
+    # Export route space optimizing latency
+    net.route_space.to_csv("../results/snr_latency_100_random/" + file_name + "/route_space_latency.csv")
     # reset of the lines states and switching matrices
     net.reset_network()
 
@@ -69,6 +71,6 @@ for i in range(2):
     plt.title("SNR Distribution")
     plt.savefig("../results/snr_latency_100_random/"+file_name+"/snr_distribution.png")
 
-    # Export CSV
-    net.route_space.to_csv("../results/snr_latency_100_random/"+file_name+"/route_space.csv")
+    # Export route space optimizing snr and weighted path
+    net.route_space.to_csv("../results/snr_latency_100_random/"+file_name+"/route_space_snr.csv")
     net.weighted_paths.to_csv("../results/snr_latency_100_random/"+file_name+"/weighted_paths.csv")

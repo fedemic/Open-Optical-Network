@@ -5,19 +5,19 @@ from core.Network import *
 for i in range(3):
     if i == 0:
         transceiver = "fixed_rate"
-        #M = 4
+        M = 5
     elif i == 1:
         transceiver = "flex_rate"
-        #M = 16
+        M = 17
     else:
         transceiver = "shannon"
-        #M = 17
+        M = 18
 
     net = Network("../resources/nodes_full_"+transceiver+".json")
     net.connect()
     net.create_weighted_paths()
     net.create_route_space()
-    M = 1
+    #M = 1
 
     conn_list = []
     n_nodes = len(net.nodes)
@@ -27,6 +27,8 @@ for i in range(3):
         traffic_matrix = np.ones((n_nodes, n_nodes)) * 100e9 * M
         np.fill_diagonal(traffic_matrix, 0)
         conn_list = net.deploy_traffic_matrix(traffic_matrix)
+        net.route_space.to_csv("../results/traffic_matrix/" + transceiver + "/route_space_snr.csv")
+        net.weighted_paths.to_csv("../results/traffic_matrix/" + transceiver + "/weighted_paths.csv")
         net.reset_network()
         M += 1
 
@@ -48,5 +50,4 @@ for i in range(3):
     plot_distribution(conn_list, "bit_rate", "../results/traffic_matrix/"+transceiver+"/bit_rate_distribution.png")
     plot_distribution(conn_list, "latency", "../results/traffic_matrix/"+transceiver+"/latency_distribution.png")
 
-    net.route_space.to_csv("../results/traffic_matrix/"+transceiver+"/route_space.csv")
-    net.weighted_paths.to_csv("../results/traffic_matrix/"+transceiver+"/weighted_paths.csv")
+
